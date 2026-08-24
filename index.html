@@ -10,7 +10,7 @@
 #particles{position:fixed;inset:0;width:100%;height:100%;z-index:-4;pointer-events:none}.orb{position:fixed;width:520px;height:520px;border-radius:50%;filter:blur(150px);opacity:.09;z-index:-3;pointer-events:none}.orb.one{right:-180px;top:-230px;background:var(--cyan)}.orb.two{left:-220px;bottom:-280px;background:var(--purple)}
 .shell{max-width:1480px;margin:auto;padding:0 32px 80px}.topbar{position:sticky;top:0;z-index:50;width:100vw;margin-left:calc(50% - 50vw);padding:17px max(24px,calc((100vw - 1480px)/2 + 32px));display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid var(--border);background:rgba(4,6,11,.72);backdrop-filter:blur(20px);box-shadow:0 12px 40px rgba(0,0,0,.2)}
 .brand{display:flex;gap:14px;align-items:center;min-width:0}.logo{width:48px;height:48px;border:1px solid rgba(86,245,228,.28);border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(86,245,228,.13),rgba(183,134,255,.08));box-shadow:0 0 28px rgba(86,245,228,.08)}.logo svg{width:29px;height:29px}.brand h1{margin:0;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:1.35rem;letter-spacing:.15em}.micro{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;text-transform:uppercase;letter-spacing:1.25px;font-size:9.5px;color:var(--muted)}.subtitle{margin-top:4px;color:var(--muted);font-size:.84rem}.online{display:flex;align-items:center;gap:7px;margin-top:6px}.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 2s infinite}@keyframes pulse{50%{opacity:.35}}
-.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.btn,button{font:inherit}.btn{border:1px solid var(--border);background:rgba(255,255,255,.035);color:var(--text);border-radius:12px;padding:10px 13px;font-family:"SFMono-Regular",Consolas,monospace;font-size:10.5px;letter-spacing:.7px;cursor:pointer;transition:.18s ease}.btn:hover{border-color:rgba(86,245,228,.35);background:rgba(86,245,228,.08);color:var(--cyan)}.btn.primary{border-color:rgba(86,245,228,.26);background:rgba(86,245,228,.11);color:var(--cyan)}.btn.danger{color:#ff94a0;border-color:rgba(255,107,122,.2);background:rgba(255,107,122,.04)}.file{display:none}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.btn,button{font:inherit}.btn{border:1px solid var(--border);background:rgba(255,255,255,.035);color:var(--text);border-radius:12px;padding:10px 13px;font-family:"SFMono-Regular",Consolas,monospace;font-size:10.5px;letter-spacing:.7px;cursor:pointer;transition:.18s ease}.btn:hover{border-color:rgba(86,245,228,.35);background:rgba(86,245,228,.08);color:var(--cyan)}.icon-btn{width:40px;height:40px;padding:0;display:inline-grid;place-items:center}.icon-btn svg{width:17px;height:17px;pointer-events:none}.nav-arrow{width:42px;height:42px;padding:0;display:inline-grid;place-items:center;font-size:1.15rem;line-height:1}.period-nav-control{height:42px;min-height:42px;align-self:flex-end}.current-period-btn{display:inline-flex;align-items:center;justify-content:center;padding-top:0;padding-bottom:0}.period-picker-year{min-width:120px}.btn.primary{border-color:rgba(86,245,228,.26);background:rgba(86,245,228,.11);color:var(--cyan)}.btn.danger{color:#ff94a0;border-color:rgba(255,107,122,.2);background:rgba(255,107,122,.04)}.file{display:none}
 .hero{padding:34px 0 20px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:18px;align-items:end}.hero h2{font-size:clamp(2rem,5vw,4.6rem);line-height:.95;letter-spacing:-.055em;margin:7px 0 13px;font-weight:300}.hero h2 span{color:var(--cyan);text-shadow:0 0 30px rgba(86,245,228,.14)}.hero p{color:var(--muted);max-width:740px;margin:0;line-height:1.6}.period-nav{justify-self:end;display:flex;gap:6px;padding:6px;border:1px solid var(--border);background:rgba(255,255,255,.025);border-radius:15px}.period-btn{border:0;background:transparent;color:var(--muted);padding:10px 14px;border-radius:10px;cursor:pointer;font-family:"SFMono-Regular",Consolas,monospace;font-size:10.5px;letter-spacing:1px}.period-btn.active{color:#061015;background:var(--cyan);box-shadow:0 0 24px rgba(86,245,228,.18)}
 .grid{display:grid;gap:18px}.metrics{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}.card,.metric{position:relative;border:1px solid var(--border);border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.065),rgba(255,255,255,.018));backdrop-filter:blur(18px);box-shadow:var(--shadow);overflow:hidden;transform-style:preserve-3d;will-change:transform;transition:transform .22s ease-out,border-color .25s ease,box-shadow .25s ease}.card.tilt-active,.metric.tilt-active{border-color:color-mix(in srgb,var(--cyan) 18%,var(--border));box-shadow:var(--shadow),0 0 24px rgba(86,245,228,.025)}.card:before,.metric:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(250px circle at var(--gx,50%) var(--gy,50%),rgba(86,245,228,.11),rgba(118,154,255,.05) 34%,transparent 70%);transition:.25s}.card:hover:before,.metric:hover:before{opacity:1}.metric{padding:20px;min-height:142px}.metric .value{font-size:clamp(1.65rem,3vw,2.65rem);font-weight:300;letter-spacing:-.045em;margin-top:18px;white-space:nowrap}.metric .hint{color:var(--muted);font-size:.78rem;margin-top:8px}.metric.income .value{color:var(--green)}.metric.expense .value{color:#ff8995}.metric.balance .value{color:var(--cyan)}.metric.budget .value{color:var(--blue)}
 .main-grid{grid-template-columns:minmax(0,1.2fr) minmax(360px,.8fr);margin-bottom:18px}.card{padding:20px}.card h3{margin:0;font-size:1.05rem;font-weight:450}.heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}.heading-left{display:flex;gap:10px;align-items:center}.icon{width:34px;height:34px;border:1px solid rgba(86,245,228,.2);border-radius:50%;display:grid;place-items:center;color:var(--cyan);background:rgba(86,245,228,.045)}.icon svg{width:17px;height:17px}.form-grid{display:grid;grid-template-columns:135px 130px minmax(160px,1fr) 150px;gap:12px}.full{grid-column:1/-1}.field label{display:block;margin:0 0 6px}.field input,.field select,.field textarea{width:100%;color:var(--text);border:1px solid var(--border);background:rgba(7,11,18,.78);border-radius:13px;padding:11px 12px;outline:none}.field textarea{min-height:76px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(86,245,228,.45);box-shadow:0 0 28px rgba(86,245,228,.06)}.form-actions{display:flex;gap:8px;align-items:end}.form-actions .btn{width:100%;min-height:42px}.status{min-height:20px;margin-top:10px;color:var(--green);font-size:.84rem}
@@ -56,10 +56,20 @@ td{font-size:.88rem}
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8" stroke="#56f5e4"/><path d="M4 12h16M12 4a13 13 0 0 1 0 16M12 4a13 13 0 0 0 0 16" stroke="#769aff"/><path d="M8.5 14.5 11 12l2 1 3-4" stroke="#b786ff"/></svg></div><div><h1>NEXUS BUDGET</h1><div class="subtitle">Local-first personal finance console.</div><div class="online micro"><span class="dot"></span>LOCAL VAULT ONLINE</div></div></div>
-  <div class="actions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="exportBtn">Export JSON</button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">Download Report</button><button class="btn danger" id="resetBtn">Reset Data</button><input class="file" id="importFile" type="file" accept="application/json,.json"></div>
+  <div class="actions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="exportBtn">Export JSON</button><button class="btn icon-btn" id="shareBtn" type="button" aria-label="Share backup" title="Share backup">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+<path d="M8.6 10.7 15.4 6.3M8.6 13.3l6.8 4.4"></path>
+</svg></button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">Download Report</button><button class="btn danger" id="resetBtn">Reset Data</button><input class="file" id="importFile" type="file" accept="application/json,.json"></div>
 </header>
 <section class="hero"><div><div class="micro">PERSONAL FINANCE // 2060 NEXUS</div><h2>See where your <span>money flows.</span></h2><p>Capture income and expenses, define monthly category budgets, and inspect weekly, monthly, or yearly performance. All data stays in this browser unless you export it.</p></div><div class="period-nav" id="periodNav"><button class="period-btn" data-period="week">WEEK</button><button class="period-btn active" data-period="month">MONTH</button><button class="period-btn" data-period="year">YEAR</button></div></section>
-<div class="control-strip card"><div class="field"><label class="micro">Selected period</label><input id="periodAnchor" type="date"></div><button class="btn" id="prevPeriod">Previous</button><button class="btn" id="todayPeriod">Current</button><button class="btn" id="nextPeriod">Next</button><div style="margin-left:auto"><div class="micro">DISPLAY</div><div id="periodLabel" style="margin-top:5px;font-size:1rem"></div></div></div>
+<div class="control-strip card">
+<div class="field"><label class="micro" id="periodPickerLabel">Selected month</label><input id="periodPicker" type="month"><input id="periodAnchor" type="date" hidden></div>
+<button class="btn nav-arrow period-nav-control" id="prevPeriod" type="button" aria-label="Previous period" title="Previous period">&#8592;</button>
+<button class="btn current-period-btn period-nav-control" id="todayPeriod" type="button">Current</button>
+<button class="btn nav-arrow period-nav-control" id="nextPeriod" type="button" aria-label="Next period" title="Next period">&#8594;</button>
+<div style="margin-left:auto"><div class="micro">DISPLAY</div><div id="periodLabel" style="margin-top:5px;font-size:1rem"></div></div>
+</div>
 <section class="grid metrics" id="metricsSection"><div class="metric income"><div class="micro">Income</div><div class="value" id="incomeMetric">0.00</div><div class="hint" id="incomeHint">Selected period</div></div><div class="metric expense"><div class="micro">Expenses</div><div class="value" id="expenseMetric">0.00</div><div class="hint" id="expenseHint">Selected period</div></div><div class="metric balance"><div class="micro">Remaining balance</div><div class="value" id="balanceMetric">0.00</div><div class="hint">Income minus expenses</div></div><div class="metric budget"><div class="micro">Budget used</div><div class="value" id="budgetMetric">0%</div><div class="hint" id="budgetHint">Against planned expenses</div></div></section>
 <section class="card weekly-allocation" id="weeklyAllocationCard"><div class="heading"><div class="heading-left"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18"/></svg></span><div><h3>Monthly remaining balance allocation</h3><div class="micro" style="margin-top:4px">REMAINING BALANCE SPLIT ACROSS THIS MONTH'S WEEKS</div></div></div></div><div class="allocation-summary" id="allocationSummary"></div><div class="allocation-weeks" id="allocationWeeks"></div></section>
 <section class="card weekly-details-control" id="weeklyDetailsControl"><div class="weekly-details-copy"><h3>Accounting details</h3><div class="micro">INCOME, EXPENSES, BUDGETS, CASHFLOW & TRANSACTIONS // HIDDEN BY DEFAULT</div></div><button class="btn" id="weeklyDetailsToggle" type="button" aria-expanded="false">Show details</button></section>
@@ -116,6 +126,60 @@ function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function parse(v){const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d)}
 function startWeek(d){d=new Date(d);const day=d.getDay();d.setDate(d.getDate()+(day===0?-6:1-day));d.setHours(0,0,0,0);return d}
+
+function isoWeekValue(date){
+  const d=new Date(date);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const week1=new Date(d.getFullYear(),0,4);
+  const week=1+Math.round(((d-week1)/86400000-3+((week1.getDay()+6)%7))/7);
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+function dateFromIsoWeek(value){
+  const m=/^(\d{4})-W(\d{2})$/.exec(value||'');
+  if(!m)return new Date();
+  const year=Number(m[1]),week=Number(m[2]);
+  const jan4=new Date(year,0,4);
+  const monday=new Date(jan4);
+  monday.setDate(jan4.getDate()-((jan4.getDay()+6)%7)+(week-1)*7);
+  return monday;
+}
+function syncPeriodPickerFromAnchor(){
+  const picker=$('periodPicker'),label=$('periodPickerLabel');
+  if(!picker||!$('periodAnchor').value)return;
+  const d=parse($('periodAnchor').value);
+  picker.classList.remove('period-picker-year');
+  if(period==='week'){
+    picker.type='week';
+    picker.value=isoWeekValue(d);
+    label.textContent='Selected week';
+  }else if(period==='month'){
+    picker.type='month';
+    picker.value=monthKey(d);
+    label.textContent='Selected month';
+  }else{
+    picker.type='number';
+    picker.min='1970';
+    picker.max='2100';
+    picker.step='1';
+    picker.value=String(d.getFullYear());
+    picker.classList.add('period-picker-year');
+    label.textContent='Selected year';
+  }
+}
+function syncAnchorFromPeriodPicker(){
+  const picker=$('periodPicker');
+  if(period==='week'){
+    $('periodAnchor').value=iso(dateFromIsoWeek(picker.value));
+  }else if(period==='month'){
+    const [y,m]=picker.value.split('-').map(Number);
+    if(y&&m)$('periodAnchor').value=iso(new Date(y,m-1,1));
+  }else{
+    const y=Number(picker.value);
+    if(Number.isFinite(y)&&y>=1970&&y<=2100)$('periodAnchor').value=iso(new Date(y,0,1));
+  }
+}
+
 function periodBounds(){const a=parse($('periodAnchor').value);let s,e;if(period==='week'){s=startWeek(a);e=new Date(s);e.setDate(s.getDate()+6)}else if(period==='month'){s=new Date(a.getFullYear(),a.getMonth(),1);e=new Date(a.getFullYear(),a.getMonth()+1,0)}else{s=new Date(a.getFullYear(),0,1);e=new Date(a.getFullYear(),11,31)}return{s,e}}
 function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeTransactions(){const {s,e}=periodBounds();return state.transactions.filter(t=>{const d=parse(t.date);return d>=s&&d<=e}).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt)}
@@ -134,6 +198,7 @@ function safeRender(name,fn,fallbackId){
   }
 }
 function render(){
+  syncPeriodPickerFromAnchor();
   setPeriodLabel();
   const weekly=period==='week';
   $('weeklyDetailsControl').classList.toggle('show',weekly);
@@ -165,11 +230,48 @@ $('txnForm').addEventListener('submit',e=>{e.preventDefault();const item={date:$
 $('txnBody').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]');if(edit){const t=state.transactions.find(x=>x.id===edit.dataset.edit);if(!t)return;editingId=t.id;$('txnDate').value=t.date;$('txnType').value=t.type;$('txnCategory').value=t.category;$('txnAmount').value=t.amount;$('txnNote').value=t.note||'';$('saveTxn').textContent='Save changes';$('cancelEdit').style.display='block';scrollTo({top:$('txnForm').getBoundingClientRect().top+scrollY-110,behavior:'smooth'})}if(del){const t=state.transactions.find(x=>x.id===del.dataset.del);if(t&&confirm(`Delete ${t.category} ${money(t.amount)}?`)){state.transactions=state.transactions.filter(x=>x.id!==t.id);saveState();render()}}})
 $('cancelEdit').onclick=()=>{editingId=null;$('txnForm').reset();$('txnDate').value=iso(new Date());$('saveTxn').textContent='Add transaction';$('cancelEdit').style.display='none'}
 $('saveBudget').onclick=()=>{const k=$('budgetMonth').value,c=$('budgetCategory').value.trim(),a=Number($('budgetAmount').value);if(!k||!c||!Number.isFinite(a)||a<0)return;state.budgets[k]=state.budgets[k]||{};if(a===0)delete state.budgets[k][c];else state.budgets[k][c]=a;if(!Object.keys(state.budgets[k]).length)delete state.budgets[k];saveState();$('budgetCategory').value='';$('budgetAmount').value='';render()}
-$('periodNav').onclick=e=>{const b=e.target.closest('[data-period]');if(!b)return;period=b.dataset.period;weeklyDetailsExpanded=false;document.querySelectorAll('.period-btn').forEach(x=>x.classList.toggle('active',x===b));render()}
+$('periodNav').onclick=e=>{const b=e.target.closest('[data-period]');if(!b)return;period=b.dataset.period;weeklyDetailsExpanded=false;document.querySelectorAll('.period-btn').forEach(x=>x.classList.toggle('active',x===b));syncPeriodPickerFromAnchor();render()}
 function shiftPeriod(n){const d=parse($('periodAnchor').value);if(period==='week')d.setDate(d.getDate()+n*7);else if(period==='month')d.setMonth(d.getMonth()+n);else d.setFullYear(d.getFullYear()+n);$('periodAnchor').value=iso(d);render()}
-$('prevPeriod').onclick=()=>shiftPeriod(-1);$('nextPeriod').onclick=()=>shiftPeriod(1);$('todayPeriod').onclick=()=>{$('periodAnchor').value=iso(new Date());render()};$('periodAnchor').onchange=render;
+$('prevPeriod').onclick=()=>shiftPeriod(-1);$('nextPeriod').onclick=()=>shiftPeriod(1);$('todayPeriod').onclick=()=>{$('periodAnchor').value=iso(new Date());render()};$('periodPicker').onchange=()=>{syncAnchorFromPeriodPicker();render()};
 function download(name,text,type){const b=new Blob([text],{type}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u)}
-$('exportBtn').onclick=()=>download(`nexus-budget-backup-${iso(new Date())}.json`,JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2),'application/json');$('importBtn').onclick=()=>{$('importFile').value='';$('importFile').click()};$('importFile').onchange=async()=>{const f=$('importFile').files[0];if(!f)return;try{const raw=JSON.parse(await f.text());if(!raw||!Array.isArray(raw.transactions))throw Error();const imported=normalizeState(raw);if(confirm(`Replace current local budget data with this import?\n\n${imported.transactions.length} transaction(s) found.`)){state=imported;saveState();render()}}catch(error){console.error('Import failed:',error);alert('That JSON file is not a valid Nexus Budget export.')}}
+function backupPayload(){return JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)}
+function backupFilename(){return `nexus-budget-backup-${iso(new Date())}.json`}
+$('exportBtn').onclick=()=>download(backupFilename(),backupPayload(),'application/json');
+$('shareBtn').onclick=async()=>{
+  const name=backupFilename();
+  const payload=backupPayload();
+  const file=new File([payload],name,{type:'application/json'});
+
+  try{
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({
+        title:'Nexus Budget Backup',
+        text:'Nexus Budget JSON backup',
+        files:[file]
+      });
+      return;
+    }
+
+    if(navigator.share){
+      await navigator.share({
+        title:'Nexus Budget Backup',
+        text:'Nexus Budget backup created. This browser cannot attach the JSON file directly, so the backup will also be downloaded.'
+      });
+      download(name,payload,'application/json');
+      return;
+    }
+
+    download(name,payload,'application/json');
+    alert('Native sharing is not supported by this browser. The JSON backup was downloaded instead.');
+  }catch(error){
+    if(error&&error.name==='AbortError')return;
+    console.error('Share backup failed:',error);
+    download(name,payload,'application/json');
+    alert('The backup could not be shared directly, so the JSON file was downloaded instead.');
+  }
+};
+$('importBtn').onclick=()=>{$('importFile').value='';$('importFile').click()};
+$('importFile').onchange=async()=>{const f=$('importFile').files[0];if(!f)return;try{const raw=JSON.parse(await f.text());if(!raw||!Array.isArray(raw.transactions))throw Error();const imported=normalizeState(raw);if(confirm(`Replace current local budget data with this import?\n\n${imported.transactions.length} transaction(s) found.`)){state=imported;saveState();render()}}catch(error){console.error('Import failed:',error);alert('That JSON file is not a valid Nexus Budget export.')}}
 function csvRows(tx){const rows=[['Date','Type','Category','Note','Amount'],...tx.map(t=>[t.date,t.type,t.category,t.note||'',Number(t.amount).toFixed(2)])];return rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n')}
 $('exportCsv').onclick=()=>download(`nexus-budget-${period}-${iso(periodBounds().s)}.csv`,'\uFEFF'+csvRows(rangeTransactions()),'text/csv;charset=utf-8');
 $('weeklyDetailsToggle').onclick=()=>{weeklyDetailsExpanded=!weeklyDetailsExpanded;render()};
@@ -182,7 +284,7 @@ function weeklyDetailReportHtml(){const tx=rangeTransactions(),inc=tx.filter(x=>
 $('reportBtn').onclick=()=>{const light=document.body.classList.contains('light'),bodyClass=light?'light':'',generated=new Date().toLocaleString();if(period==='week'){const {s}=periodBounds();const html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus Weekly Remaining Balance Report</title><style>${reportNexusCss()}</style></head><body class="${bodyClass}"><main class="report-shell"><header class="report-head"><div class="brandline"><div class="mark">N</div><div class="eyebrow">NEXUS BUDGET 2060 // WEEKLY REMAINING BALANCE</div></div><h1>${esc($('periodLabel').textContent)} <span>Report</span></h1><p class="sub">Generated locally ${generated}. The primary weekly view tracks only the balance remaining after monthly expenses. Accounting details are available below but collapsed by default.</p></header>${weeklyAllocationReportHtml()}${weeklyDetailReportHtml()}</main></body></html>`;download(`nexus-budget-report-week-${iso(s)}.html`,html,'text/html');return}const actualTx=rangeTransactions(),tx=period==='year'?annualizedMonthTransactions():actualTx,{s}=periodBounds(),inc=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),exp=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),bud=periodBudgetMap(),planned=Object.values(bud).reduce((a,b)=>a+Number(b),0),cats=[...new Set([...Object.keys(bud),...tx.filter(x=>x.type==='expense').map(x=>x.category)])],budgetRows=cats.map(c=>{const a=tx.filter(x=>x.type==='expense'&&x.category===c).reduce((q,x)=>q+Number(x.amount),0);return `<tr><td>${esc(c)}</td><td>${money(bud[c]||0)}</td><td>${money(a)}</td><td>${money(Number(bud[c]||0)-a)}</td></tr>`}).join(''),detailRows=actualTx.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.type)}</td><td>${esc(t.category)}</td><td>${esc(t.note||'')}</td><td>${money(t.amount)}</td></tr>`).join('');const annualNote=period==='year'?'<p class="callout">Annual figures are projected from the selected month × 12, providing a high-level yearly account view.</p>':'';const html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus Budget Report</title><style>${reportNexusCss()}</style></head><body class="${bodyClass}"><main class="report-shell"><header class="report-head"><div class="brandline"><div class="mark">N</div><div class="eyebrow">NEXUS BUDGET 2060 // ${period.toUpperCase()} REPORT</div></div><h1>${esc($('periodLabel').textContent)} <span>Report</span></h1><p class="sub">Generated locally ${generated}. No financial data was uploaded.</p></header>${annualNote}<div class="metrics"><div class="card"><div class="metric-label">Income</div><div class="v">${money(inc)}</div></div><div class="card"><div class="metric-label">Expenses</div><div class="v">${money(exp)}</div></div><div class="card"><div class="metric-label">Remaining balance</div><div class="v">${money(inc-exp)}</div></div><div class="card"><div class="metric-label">Planned expenses</div><div class="v">${money(planned)}</div></div></div>${reportChartsHtml(tx,inc,exp)}<section class="panel"><h2>${period==='year'?'Annual expense accounts':'Budget vs actual'}</h2><p class="sub">${period==='year'?'High-level annualized expense account totals by category.':'Planned versus actual expense totals by category.'}</p><div class="table-scroll"><table><thead><tr><th>Category</th><th>Planned</th><th>Expenses</th><th>Remaining plan</th></tr></thead><tbody>${budgetRows||'<tr><td colspan="4">No category data for this period.</td></tr>'}</tbody></table></div></section>${period==='year'?'':`<section class="panel"><h2>Transactions</h2><p class="sub">Transactions recorded in the selected ${period}.</p><div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Amount</th></tr></thead><tbody>${detailRows||'<tr><td colspan="5">No transactions for this period.</td></tr>'}</tbody></table></div></section>`}</main></body></html>`;download(`nexus-budget-report-${period}-${iso(s)}.html`,html,'text/html')}
 $('resetBtn').onclick=()=>{if(confirm('Delete all locally stored Nexus Budget data? This cannot be undone unless you have an export.')){state=structuredClone(DEFAULT);saveState();render()}}
 const savedTheme=localStorage.getItem(THEME_KEY);applyTheme(savedTheme==='light'?'light':'dark');$('themeToggle').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
-const today=iso(new Date());$('txnDate').value=today;$('periodAnchor').value=today;$('budgetMonth').value=today.slice(0,7);render();
+const today=iso(new Date());$('txnDate').value=today;$('periodAnchor').value=today;$('budgetMonth').value=today.slice(0,7);syncPeriodPickerFromAnchor();render();
 // ambient particles
 const canvas=$('particles'),ctx=canvas.getContext('2d');let ps=[];function resize(){const r=devicePixelRatio||1;canvas.width=innerWidth*r;canvas.height=innerHeight*r;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(r,0,0,r,0,0);ps=Array.from({length:Math.min(100,Math.floor(innerWidth/15))},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:Math.random()*1.2+.2,v:Math.random()*.09+.02,o:Math.random()*.2+.04}))}function anim(){ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of ps){p.y-=p.v;if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth}ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fillStyle=`rgba(130,210,255,${p.o})`;ctx.fill()}requestAnimationFrame(anim)}addEventListener('resize',resize);resize();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)anim();
 document.querySelectorAll('.card,.metric').forEach(c=>{
