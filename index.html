@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>Nexus Budget</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Cdefs%3E%0A%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%220%22%3E%0A%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2356f5e4%22%2F%3E%0A%20%20%20%20%3Cstop%20offset%3D%22.5%22%20stop-color%3D%22%23769aff%22%2F%3E%0A%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b786ff%22%2F%3E%0A%20%20%3C%2FlinearGradient%3E%0A%20%20%3Cfilter%20id%3D%22glow%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.8%22%20result%3D%22b%22%2F%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22b%22%2F%3E%3CfeMergeNode%20in%3D%22SourceGraphic%22%2F%3E%3C%2FfeMerge%3E%3C%2Ffilter%3E%0A%3C%2Fdefs%3E%0A%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2258%22%20height%3D%2258%22%20rx%3D%2216%22%20fill%3D%22%2307101a%22%20stroke%3D%22%2356f5e4%22%20stroke-opacity%3D%22.35%22%2F%3E%0A%3Cpath%20d%3D%22M14%2046V18c0-3%203.5-4.4%205.5-2.2L42%2042V18c0-2.2%201.8-4%204-4h4v32c0%203-3.5%204.4-5.5%202.2L22%2022v20c0%202.2-1.8%204-4%204h-4Z%22%0A%20fill%3D%22none%22%20stroke%3D%22url%28%23g%29%22%20stroke-width%3D%225.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20filter%3D%22url%28%23glow%29%22%2F%3E%0A%3C%2Fsvg%3E">
 <meta name="theme-color" content="#04060b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nexus Budget">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAHbUlEQVR4nO3dP27cOBSA8ZdFgLQpUmUaXyCt+5wg6d34BikW8CEM5AybZnr7BOnT+gJppvMdkma14cqUREp85OPj9wMC7NoeWzv6zFBv/uyrN2/f/xLAib9aHwBQEkHDFYKGKwQNVwgarhA0XCFouPK69QHk+nT5cdP6GEbzeLo+tz6GVK8sP7BCvHZZjdxc0ETcH0txmwk6NWRLd94oejo3zYPeurMs3En4P8vnrFnQa3cKEffD2nmsHvTSHUDE/bNwbqsGHfsPJmR/Wp7nKkET8phanHf1RwqJeVyx86w9llVdoecHT8jjqtWC2gpNzAjNz7/WSq0SNDEjpkbUxbcc4UESMpZodVJ0hSZmpAr7KLlSFwuamJFLI+oiQfMMOZRQoqPDQXMBiCNKXygW3UMTM/Ywc1HIvhmllNpP7w6afTM07e2ryJaD1RkllOhoV9BsNaDl6NaD9+WAK9lBszpD25FVmhUarmQFzeqMWvau0qzQcCU5aObOaCm1v11v1mh5u/Fwd7ld+tzn+9O3ekeCox5P1+fchbS7dx9dshby/GsI26+kLYfl7cbD3eU2Jeb5bXSOBppSOkx6CZbF6cZalN/fyd/zj318lq/zj7FS9yGnv+62HLkhzz8Xhv1wd7klal+6Cnop5rWQl752Cpuo1z3cXV587PP9qcGRpOki6NyQf95cPoT/fnU+PcVuS9TrYjFPH7ca9eYeuuX++WjIMfO4wy0IUf+xFHOoZtSpHZp8pHBtchGL+efN5UNKzNPXbn2/0aXEnPN1NZkLei3keXw5Ic9vl/OzR5IbqbWoTQUdCyoWskja9mJNePvw+xN138xcFM5DOrJP3mPEi8TwPv/v/n6W7Pv3y/3lycq1iIkVOiXmvduLNWv7aVbqPpkIOlRqn5yKqH1pHvRaNJohr/2ckaP+/k5ezOxLfr225kGHWo7QGOf98c+XtMmFtZhFjAUdOro6xx4d3PszR1ulRbajTo2+tqZBR6+y5VjMV+fT056YYz975K2HyHK0VmMWMTS2K2Ee8tX59HR0pR9xnBeyHG+M2S1HjrVVucTWY/SVuiddB70U8vzJ/EQ9jq6DjpliJuoxuQn647N8nUesHTXscRP0Eo2oJ6zS9rgPWiT+AtlcjPP64DLo2GgtjPrInHpC1Da5DFpk+ymMXCT65DZokZdRM/nwz3XQMUTtm/ugt/bTIozzPHEftEi9qCes0u0MEbRIWtR7MM6zZZigRRjnjWCooEUY53k3XNAijPM8GzLoGKL2YdigGef5NGzQIozzPBo6aBHGed4MH7QI4zxPCPpfjPN8IOgA47z+EfQGJh99IegZJh99I+iIGlGz9dBB0Au0xnkhoi6PoFdojPO4SNRF0BsY5/WFoBMwzusHQe/EOM8mgk7EOK8PBJ2BcZ59BJ2JcZ5tBL0D4zy7CHonxnk2EfQBjPPsIejCGOe1RdAHMc6zhaAL4HWJdhB0Ibwu0QaCLojJR3sEXRiTj7YIugKiroegFfA2Y+0QtBLGeW0QtCLGefURtDLGeXURdAWM8+oh6EoY59VB0A0RdXkEXRHjPH0EXRnjPF0E3QDjPD0E3QjjPB0E3RDjvPIIujHGeWURtEFEvR9BG9BinOc1aoI2ovY4zyuCNqT2OM8jgjam1jhv+nP0e1lD0AbVGOdNvIVN0EbVGOd5RNAdKRV1+Kfc0dnwuvUBYNnn+9O3+Xjt47N8DbcIV+fT05EwvUXNCm2c1jjPK4LuQI3/a4AXBN2JGuM8Dwi6IxrjPG8IujMa4zxPCNqBWNSjhm0uaG9jJA0WLhKt/sKYmkPnxvzz5vLB6h2rLXVGHbtt6UXD0sTFVNDIsxS1yPqz6o6EvrWAbF24aiPozk0Bba3WKdZCX/qcpdVZhKDdWFut50qFPv/+rVdnEZFXb96+/7X2BZ8uP26mf348XZ81D+bT5Uf2bR5P1wpH0re9L69KDT32i6Idc2qHplbox9N1VtTEHBdbrVOsrehrWwsLK/PEVNAi6VET87qlyEqGvvZzWjEXtMh21MS8X6nQrYU82dxDi9TdR89+7ouPEXNdD3eX29bx5vRncoWeEG97rWPOZe6hb+AIgoYr2UGH+xlAW25vSUHXvBAElqR0yJYDruwKmm0HatjTWXLQbDvQUmp/bDngSlbQ4W8J2w5o2vvoNCs0XMkOmlUa2o48d4gVGq7sCppVGlqOPrOzyApN1CihREe7g2YuDU17+zq0QrP1QCmlXkRS9KKQqLFHyW4OBz3/bSJq5Jj3cnQrW2SFZj+NEkp0VGzLwX4auTRefF10D03USKX1TgJJb2OQq/S+CH5ot6Hy0DcXioipsdCpPZeDqBGq9be2ypYjFAuZLcg4ap9/9WfbxQ6e1XoMLRYz9RU6xGo9hpbnuWrQIsurM2H3z8K5rR70ZG3bQdz9sHYemwU92dpPE7c9ls9Z86AnqReKBF5fT+fGTNATJiD9sRDyxFzQIeK2y1LEIdNBxxB5fVbjjekuaGAN78sBVwgarhA0XCFouELQcIWg4cpvhMuyH71EvGkAAAAASUVORK5CYII=">
+<link rel="apple-touch-startup-image" href="data:image/png;base64,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">
+<meta name="format-detection" content="telephone=no">
 <style>
 :root{--bg:#04060b;--surface:rgba(12,18,28,.68);--surface2:rgba(18,27,42,.82);--border:rgba(255,255,255,.11);--text:#f5f8ff;--muted:#7d899c;--cyan:#56f5e4;--blue:#769aff;--purple:#b786ff;--green:#56f5a8;--red:#ff6b7a;--amber:#ffc66d;--radius:22px;--shadow:0 18px 60px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;min-height:100vh;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 28% 4%,rgba(118,154,255,.12),transparent 34rem),radial-gradient(circle at 95% 0%,rgba(86,245,228,.1),transparent 30rem),var(--bg);overflow-x:hidden}body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-5;opacity:.18;background-image:radial-gradient(circle,rgba(130,210,255,.55) .7px,transparent .85px);background-size:28px 28px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
@@ -174,6 +181,40 @@ body.modal-open{overflow:hidden}
   .finance-pair-grid{grid-template-columns:1fr}
 }
 
+
+/* Home-screen / standalone mode */
+html,body{min-height:100%;min-height:100dvh}
+body{
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+}
+body.standalone{
+  min-height:100dvh;
+  overscroll-behavior-y:none;
+}
+body.standalone .shell{
+  padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));
+}
+body.standalone .topbar{
+  padding-top:calc(17px + env(safe-area-inset-top,0px));
+}
+body.standalone .add-fab{
+  bottom:calc(22px + env(safe-area-inset-bottom,0px));
+}
+@media(max-width:900px){
+  body.standalone .topbar{
+    padding-top:calc(14px + env(safe-area-inset-top,0px));
+  }
+}
+@media(max-width:620px){
+  body.standalone .shell{
+    padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
+  }
+  body.standalone .add-fab{
+    bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  }
+}
+
 </style>
 </head>
 <body>
@@ -282,6 +323,43 @@ body.modal-open{overflow:hidden}
 
 </div>
 <script>
+
+const STANDALONE_MODE=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+document.body.classList.toggle('standalone',STANDALONE_MODE);
+
+(function setupEmbeddedManifest(){
+  try{
+    const startUrl=location.href.split('#')[0];
+    const manifest={
+      id:startUrl,
+      name:'Nexus Budget',
+      short_name:'Nexus',
+      description:'Local-first personal finance console.',
+      start_url:startUrl,
+      scope:new URL('.',startUrl).href,
+      display:'standalone',
+      display_override:['standalone','minimal-ui'],
+      orientation:'portrait-primary',
+      background_color:'#04060b',
+      theme_color:'#04060b',
+      icons:[{
+        src:document.querySelector('link[rel="apple-touch-icon"]')?.href||'',
+        sizes:'180x180',
+        type:'image/png',
+        purpose:'any maskable'
+      }]
+    };
+    const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('link');
+    link.rel='manifest';
+    link.href=url;
+    document.head.appendChild(link);
+  }catch(error){
+    console.warn('Nexus manifest setup skipped:',error);
+  }
+})();
+
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:2,transactions:[],budgets:{}};
@@ -289,7 +367,7 @@ let state=loadState(), period='month', editingId=null;
 let weeklyDetailsExpanded=false;
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n)||0);
-function applyTheme(theme){const light=theme==='light';document.body.classList.toggle('light',light);$('themeToggle').setAttribute('aria-checked',String(light));$('themeLabel').textContent=light?'Light':'Dark';localStorage.setItem(THEME_KEY,light?'light':'dark')}
+function applyTheme(theme){const light=theme==='light';document.body.classList.toggle('light',light);$('themeToggle').setAttribute('aria-checked',String(light));$('themeLabel').textContent=light?'Light':'Dark';const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=light?'#edf3f7':'#04060b';localStorage.setItem(THEME_KEY,light?'light':'dark')}
 function normalizeState(raw){
   const clean=structuredClone(DEFAULT);
   if(!raw||typeof raw!=='object')return clean;
