@@ -215,6 +215,22 @@ body.standalone .add-fab{
   }
 }
 
+
+/* Pay cycle settings */
+.payday-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.payday-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--border);border-radius:11px;background:rgba(255,255,255,.025);color:var(--muted);font-family:"SFMono-Regular",Consolas,monospace;font-size:10px;letter-spacing:.6px;cursor:pointer}
+.payday-pill:hover{border-color:rgba(86,245,228,.35);color:var(--cyan);background:rgba(86,245,228,.06)}
+#paydayModal .modal-card{width:min(560px,100%)}
+.payday-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.payday-option{padding:13px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025);cursor:pointer;color:var(--text);text-align:left}
+.payday-option.active{border-color:rgba(86,245,228,.38);background:rgba(86,245,228,.08);color:var(--cyan)}
+.payday-option small{display:block;color:var(--muted);margin-top:4px;font-size:.72rem}
+#customPaydayWrap{display:none;margin-top:12px}
+#customPaydayWrap.show{display:block}
+@media(max-width:620px){
+  .payday-options{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -248,7 +264,15 @@ body.standalone .add-fab{
 <button class="btn nav-arrow period-nav-control" id="prevPeriod" type="button" aria-label="Previous period" title="Previous period">&#8592;</button>
 <button class="btn current-period-btn period-nav-control" id="todayPeriod" type="button">Current</button>
 <button class="btn nav-arrow period-nav-control" id="nextPeriod" type="button" aria-label="Next period" title="Next period">&#8594;</button>
-<div style="margin-left:auto"><div class="micro">DISPLAY</div><div id="periodLabel" style="margin-top:5px;font-size:1rem"></div></div>
+<div style="margin-left:auto">
+  <div class="micro">DISPLAY</div>
+  <div id="periodLabel" style="margin-top:5px;font-size:1rem"></div>
+  <div class="payday-summary" style="margin-top:8px">
+    <button class="payday-pill" id="paydaySettingsBtn" type="button" title="Configure salary payday">
+      <span>Pay cycle</span><strong id="paydaySummaryText" style="color:var(--cyan);font-weight:500">25th</strong>
+    </button>
+  </div>
+</div>
 </div>
 <section class="grid metrics" id="metricsSection"><div class="metric income"><div class="micro">Income</div><div class="value" id="incomeMetric">0.00</div><div class="hint" id="incomeHint">Selected period</div></div><div class="metric expense"><div class="micro">Expenses</div><div class="value" id="expenseMetric">0.00</div><div class="hint" id="expenseHint">Selected period</div></div><div class="metric balance"><div class="micro">Remaining balance</div><div class="value" id="balanceMetric">0.00</div><div class="hint">Income minus expenses</div></div><div class="metric budget"><div class="micro">Budget used</div><div class="value" id="budgetMetric">0%</div><div class="hint" id="budgetHint">Against planned expenses</div></div></section>
 <section class="card weekly-allocation" id="weeklyAllocationCard">
@@ -279,6 +303,36 @@ body.standalone .add-fab{
 <footer class="footer"><span>LOCAL STORAGE ONLY // EXPORT JSON FOR DEVICE TRANSFER</span><span id="recordCount">0 RECORDS</span></footer>
 
 <button class="add-fab" id="openTxnModal" type="button" aria-label="Add transaction or monthly budget" title="Add"></button>
+
+
+<div class="modal" id="paydayModal" role="dialog" aria-modal="true" aria-labelledby="paydayModalTitle">
+  <div class="card modal-card">
+    <div class="heading">
+      <div class="heading-left">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v3M18 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="M8 13h3v3H8z"/></svg></span>
+        <div><h3 id="paydayModalTitle">Salary pay cycle</h3><div class="micro" style="margin-top:4px">WEEKLY VIEW STARTS FROM PAYDAY</div></div>
+      </div>
+      <button class="btn modal-close" id="closePaydayModal" type="button" aria-label="Close payday settings">×</button>
+    </div>
+    <div class="payday-options">
+      <button class="payday-option" id="payday25Option" type="button" data-payday-mode="day" data-payday-day="25">
+        <strong>25th of the month</strong><small>Example: 25 Aug → 24 Sep</small>
+      </button>
+      <button class="payday-option" id="paydayLastOption" type="button" data-payday-mode="last">
+        <strong>Last day of month</strong><small>Example: 31 Aug → 29 Sep</small>
+      </button>
+      <button class="payday-option" id="paydayCustomOption" type="button" data-payday-mode="custom">
+        <strong>Custom day</strong><small>Choose another recurring salary day</small>
+      </button>
+    </div>
+    <div id="customPaydayWrap" class="field">
+      <label class="micro">Custom payday</label>
+      <input id="customPaydayDay" type="number" min="1" max="28" step="1" value="25">
+      <div class="small" style="margin-top:6px">Custom recurring days are limited to 1–28 so every month has the date.</div>
+    </div>
+    <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button></div>
+  </div>
+</div>
 
 <div class="modal" id="txnModal" role="dialog" aria-modal="true" aria-labelledby="txnModalTitle">
   <div class="card modal-card">
@@ -362,7 +416,7 @@ document.body.classList.toggle('standalone',STANDALONE_MODE);
 
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
-const DEFAULT={version:2,transactions:[],budgets:{}};
+const DEFAULT={version:3,transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25}};
 let state=loadState(), period='month', editingId=null;
 let weeklyDetailsExpanded=false;
 const $=id=>document.getElementById(id);
@@ -381,6 +435,7 @@ function normalizeState(raw){
     createdAt:Number(t.createdAt)||Date.now()+i
   })).filter(t=>/^\d{4}-\d{2}-\d{2}$/.test(t.date)&&t.amount>=0);
   if(raw.budgets&&typeof raw.budgets==='object'&&!Array.isArray(raw.budgets)) clean.budgets=raw.budgets;
+  if(raw.settings&&typeof raw.settings==='object'){clean.settings={...clean.settings,...raw.settings}}
   clean.version=Number(raw.version)||DEFAULT.version;
   return clean;
 }
@@ -455,13 +510,93 @@ function syncAnchorFromPeriodPicker(){
 }
 
 function periodBounds(){const a=parse($('periodAnchor').value);let s,e;if(period==='week'){s=startWeek(a);e=new Date(s);e.setDate(s.getDate()+6)}else if(period==='month'){s=new Date(a.getFullYear(),a.getMonth(),1);e=new Date(a.getFullYear(),a.getMonth()+1,0)}else{s=new Date(a.getFullYear(),0,1);e=new Date(a.getFullYear(),11,31)}return{s,e}}
+
+function daysInMonth(year,monthIndex){return new Date(year,monthIndex+1,0).getDate()}
+function paydayDateForMonth(year,monthIndex){
+  const settings=state.settings||DEFAULT.settings;
+  if(settings.paydayMode==='last') return new Date(year,monthIndex+1,0);
+  const day=Math.max(1,Math.min(Number(settings.paydayDay)||25,daysInMonth(year,monthIndex)));
+  return new Date(year,monthIndex,day);
+}
+function payCycleForDate(date){
+  const d=new Date(date);
+  d.setHours(0,0,0,0);
+  const thisPayday=paydayDateForMonth(d.getFullYear(),d.getMonth());
+  let start,next;
+  if(d>=thisPayday){
+    start=thisPayday;
+    next=paydayDateForMonth(d.getFullYear(),d.getMonth()+1);
+  }else{
+    start=paydayDateForMonth(d.getFullYear(),d.getMonth()-1);
+    next=thisPayday;
+  }
+  const end=new Date(next);
+  end.setDate(end.getDate()-1);
+  return {start,end,nextPayday:next}
+}
+function payCycleTransactions(date){
+  const {start,end}=payCycleForDate(date);
+  return state.transactions.filter(t=>{
+    const x=parse(t.date);
+    return x>=start&&x<=end
+  })
+}
+function payCycleWeekBuckets(date){
+  const {start,end}=payCycleForDate(date),arr=[];
+  let cur=new Date(start),idx=1,guard=0;
+  while(cur<=end&&guard<8){
+    const s=new Date(cur);
+    const e=new Date(cur);
+    e.setDate(e.getDate()+6);
+    if(e>end)e.setTime(end.getTime());
+    arr.push({label:`W${idx}`,s,e});
+    cur=new Date(e);
+    cur.setDate(cur.getDate()+1);
+    idx++;
+    guard++;
+  }
+  return arr
+}
+function paydaySummary(){
+  const s=state.settings||DEFAULT.settings;
+  return s.paydayMode==='last'?'Month end':`${Number(s.paydayDay)||25}${ordinal(Number(s.paydayDay)||25)}`
+}
+function ordinal(n){
+  const v=n%100;
+  if(v>=11&&v<=13)return'th';
+  return n%10===1?'st':n%10===2?'nd':n%10===3?'rd':'th'
+}
+function refreshPaydayUi(){
+  if($('paydaySummaryText'))$('paydaySummaryText').textContent=paydaySummary();
+}
+
 function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeTransactions(){const {s,e}=periodBounds();return state.transactions.filter(t=>{const d=parse(t.date);return d>=s&&d<=e}).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt)}
 function periodBudgetMap(){const {s,e}=periodBounds(), out={};if(period==='month'){Object.assign(out,state.budgets[monthKey(s)]||{})}else if(period==='year'){const anchor=parse($('periodAnchor').value),bm=state.budgets[monthKey(anchor)]||{};for(const[k,v]of Object.entries(bm))out[k]=Number(v)*12}else{const days={};for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){const k=monthKey(d);days[k]=(days[k]||0)+1}for(const[k,count]of Object.entries(days)){const [y,m]=k.split('-').map(Number),dim=new Date(y,m,0).getDate(),bm=state.budgets[k]||{};for(const[cat,v]of Object.entries(bm))out[cat]=(out[cat]||0)+Number(v)*(count/dim)}}return out}
-function setPeriodLabel(){const{s,e}=periodBounds();const opt={day:'2-digit',month:'short',year:'numeric'};$('periodLabel').textContent=period==='year'?String(s.getFullYear()):period==='month'?s.toLocaleDateString(undefined,{month:'long',year:'numeric'}):`${s.toLocaleDateString(undefined,opt)} – ${e.toLocaleDateString(undefined,opt)}`}
+function setPeriodLabel(){const{s,e}=periodBounds();const opt={day:'2-digit',month:'short',year:'numeric'};if(period==='week'){const c=payCycleForDate(parse($('periodAnchor').value));$('periodLabel').textContent=`${c.start.toLocaleDateString(undefined,opt)} – ${c.end.toLocaleDateString(undefined,opt)}`}else{$('periodLabel').textContent=period==='year'?String(s.getFullYear()):s.toLocaleDateString(undefined,{month:'long',year:'numeric'})}}
 function monthTransactionsForDate(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0);return state.transactions.filter(t=>{const x=parse(t.date);return x>=s&&x<=e})}
 function monthWeekBuckets(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0),arr=[];for(let cur=new Date(s),idx=1;cur<=e;idx++){const bs=new Date(cur),be=new Date(cur);be.setDate(Math.min(cur.getDate()+6,e.getDate()));arr.push({label:`W${idx}`,s:bs,e:be});cur=new Date(be);cur.setDate(cur.getDate()+1)}return arr}
-function renderWeeklyAllocation(){const card=$('weeklyAllocationCard');if(period!=='week'){card.classList.remove('show');return}card.classList.add('show');const anchor=parse($('periodAnchor').value),tx=monthTransactionsForDate(anchor),income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),remaining=income-expense,weeks=monthWeekBuckets(anchor),share=weeks.length?remaining/weeks.length:0,activeIndex=Math.max(0,weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));$('allocationSummary').innerHTML=`<div class="allocation-stat"><div class="micro">Monthly remaining balance</div><div class="v" style="color:var(--cyan)">${money(remaining)}</div></div><div class="allocation-stat"><div class="micro">Weeks in month</div><div class="v">${weeks.length}</div></div><div class="allocation-stat"><div class="micro">Selected week allocation</div><div class="v" style="color:var(--blue)">${money(share)}</div></div>`;$('allocationWeeks').innerHTML=weeks.map((w,i)=>{const active=i===activeIndex;return `<div class="allocation-week ${active?'active':''}"><div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div><div class="amt">${money(share)}</div><div class="small" style="margin-top:5px">${active?'Current weekly allowance':'Remaining-balance allocation'}</div></div>`}).join('')}
+function renderWeeklyAllocation(){
+  const card=$('weeklyAllocationCard');
+  if(period!=='week'){card.classList.remove('show');return}
+  card.classList.add('show');
+  const anchor=parse($('periodAnchor').value),
+    cycle=payCycleForDate(anchor),
+    tx=payCycleTransactions(anchor),
+    income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),
+    expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),
+    remaining=income-expense,
+    weeks=payCycleWeekBuckets(anchor),
+    share=weeks.length?remaining/weeks.length:0,
+    activeIndex=Math.max(0,weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
+
+  $('allocationSummary').innerHTML=`<div class="allocation-stat"><div class="micro">Pay-cycle remaining balance</div><div class="v" style="color:var(--cyan)">${money(remaining)}</div><div class="small" style="margin-top:5px">${cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div></div><div class="allocation-stat"><div class="micro">Weeks in pay cycle</div><div class="v">${weeks.length}</div><div class="small" style="margin-top:5px">Next payday ${cycle.nextPayday.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div></div><div class="allocation-stat"><div class="micro">Selected week allocation</div><div class="v" style="color:var(--blue)">${money(share)}</div></div>`;
+
+  $('allocationWeeks').innerHTML=weeks.map((w,i)=>{
+    const active=i===activeIndex;
+    return `<div class="allocation-week ${active?'active':''}"><div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div><div class="amt">${money(share)}</div><div class="small" style="margin-top:5px">${active?'Current weekly allowance':'Pay-cycle allocation'}</div></div>`
+  }).join('')
+}
 function annualizedMonthTransactions(){const anchor=parse($('periodAnchor').value);return monthTransactionsForDate(anchor).map(t=>({...t,amount:Number(t.amount)*12}))}
 function refreshCategories(){const list=$('categoryList');if(!list)return;const categories=new Set();for(const t of state.transactions||[]){const c=String(t.category||'').trim();if(c)categories.add(c)}for(const month of Object.values(state.budgets||{})){for(const c of Object.keys(month||{})){const name=String(c||'').trim();if(name)categories.add(name)}}list.innerHTML=[...categories].sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${esc(c)}"></option>`).join('')}
 function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}
@@ -472,6 +607,7 @@ function safeRender(name,fn,fallbackId){
   }
 }
 function render(){
+  refreshPaydayUi();
   syncPeriodPickerFromAnchor();
   setPeriodLabel();
   const weekly=period==='week';
@@ -534,18 +670,19 @@ function buckets(){
 function renderTrend(tx){
   if(period==='week'){
     const anchor=parse($('periodAnchor').value),
-      monthTx=monthTransactionsForDate(anchor),
-      income=monthTx.filter(x=>x.type==='income').reduce((a,x)=>a+Number(x.amount),0),
-      expense=monthTx.filter(x=>x.type==='expense').reduce((a,x)=>a+Number(x.amount),0),
+      cycle=payCycleForDate(anchor),
+      cycleTx=payCycleTransactions(anchor),
+      income=cycleTx.filter(x=>x.type==='income').reduce((a,x)=>a+Number(x.amount),0),
+      expense=cycleTx.filter(x=>x.type==='expense').reduce((a,x)=>a+Number(x.amount),0),
       remaining=income-expense,
-      weeks=monthWeekBuckets(anchor),
+      weeks=payCycleWeekBuckets(anchor),
       share=weeks.length?remaining/weeks.length:0,
       max=Math.max(Math.abs(share),1);
 
     $('trendChart').innerHTML=`<div class="trend">${weeks.map(w=>{
       const active=anchor>=w.s&&anchor<=w.e;
       return `<div class="trend-col ${active?'active':''}" title="${esc(w.label)}: Allocation ${money(share)}"><div style="display:flex;gap:3px;align-items:end;height:100%"><div class="trend-bar allocation" style="height:${Math.max(Math.abs(share)/max*100,1)}%;flex:1"></div></div><div class="trend-label">${esc(w.label)}</div></div>`
-    }).join('')}</div><div class="trend-key"><span><i class="keydot" style="background:var(--cyan)"></i>Weekly allocation</span><span>${money(remaining)} monthly remaining</span></div>`;
+    }).join('')}</div><div class="trend-key"><span><i class="keydot" style="background:var(--cyan)"></i>Weekly allocation</span><span>${cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</span></div>`;
     return;
   }
 
@@ -578,6 +715,47 @@ $('periodNav').onclick=e=>{const b=e.target.closest('[data-period]');if(!b)retur
 function shiftPeriod(n){const d=parse($('periodAnchor').value);if(period==='week')d.setDate(d.getDate()+n*7);else if(period==='month')d.setMonth(d.getMonth()+n);else d.setFullYear(d.getFullYear()+n);$('periodAnchor').value=iso(d);render()}
 $('prevPeriod').onclick=()=>shiftPeriod(-1);$('nextPeriod').onclick=()=>shiftPeriod(1);$('todayPeriod').onclick=()=>{$('periodAnchor').value=iso(new Date());render()};$('periodPicker').onchange=()=>{syncAnchorFromPeriodPicker();render()};
 
+
+
+let pendingPaydayMode=null;
+function openPaydayModal(){
+  const s=state.settings||DEFAULT.settings;
+  pendingPaydayMode=s.paydayMode==='last'?'last':(Number(s.paydayDay)===25?'day':'custom');
+  $('customPaydayDay').value=Number(s.paydayDay)||25;
+  updatePaydayOptions();
+  $('paydayModal').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+function closePaydayModal(){
+  $('paydayModal').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+function updatePaydayOptions(){
+  $('payday25Option').classList.toggle('active',pendingPaydayMode==='day');
+  $('paydayLastOption').classList.toggle('active',pendingPaydayMode==='last');
+  $('paydayCustomOption').classList.toggle('active',pendingPaydayMode==='custom');
+  $('customPaydayWrap').classList.toggle('show',pendingPaydayMode==='custom');
+}
+$('paydaySettingsBtn').onclick=openPaydayModal;
+$('closePaydayModal').onclick=closePaydayModal;
+$('paydayModal').addEventListener('click',e=>{if(e.target===$('paydayModal'))closePaydayModal()});
+document.querySelectorAll('[data-payday-mode]').forEach(btn=>btn.onclick=()=>{
+  pendingPaydayMode=btn.dataset.paydayMode;
+  if(btn.dataset.paydayDay)$('customPaydayDay').value=btn.dataset.paydayDay;
+  updatePaydayOptions();
+});
+$('savePaydaySettings').onclick=()=>{
+  if(pendingPaydayMode==='last'){
+    state.settings={...(state.settings||{}),paydayMode:'last',paydayDay:31};
+  }else{
+    const day=pendingPaydayMode==='day'?25:Math.max(1,Math.min(28,Number($('customPaydayDay').value)||25));
+    state.settings={...(state.settings||{}),paydayMode:'day',paydayDay:day};
+  }
+  saveState();
+  refreshPaydayUi();
+  render();
+  closePaydayModal();
+};
 
 function setAddMode(mode){
   const budget=mode==='budget';
@@ -613,7 +791,7 @@ $('addTxnMode').onclick=()=>setAddMode('transaction');
 $('addBudgetMode').onclick=()=>setAddMode('budget');
 $('closeTxnModal').onclick=closeTxnModal;
 $('txnModal').addEventListener('click',e=>{if(e.target===$('txnModal'))closeTxnModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('txnModal').classList.contains('open'))closeTxnModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('txnModal').classList.contains('open'))closeTxnModal();if($('paydayModal').classList.contains('open'))closePaydayModal()}});
 
 $('modalSaveBudget').onclick=()=>{
   const k=$('modalBudgetMonth').value,c=$('modalBudgetCategory').value.trim(),a=Number($('modalBudgetAmount').value);
@@ -699,21 +877,35 @@ function reportChartsHtml(tx,inc,exp){const maxAccount=Math.max(inc,exp,Math.abs
 function weeklyAllocationTrendReportHtml(){
   if(period!=='week')return'';
   const anchor=parse($('periodAnchor').value),
-    tx=monthTransactionsForDate(anchor),
+    cycle=payCycleForDate(anchor),
+    tx=payCycleTransactions(anchor),
     income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),
     expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),
     remaining=income-expense,
-    weeks=monthWeekBuckets(anchor),
+    weeks=payCycleWeekBuckets(anchor),
     share=weeks.length?remaining/weeks.length:0,
     max=Math.max(Math.abs(share),1);
 
-  return `<section class="panel"><h2>Weekly allocation trend</h2><p class="sub">The selected month’s post-expense balance split evenly across its week buckets.</p><div class="trend-report">${weeks.map(w=>{
+  return `<section class="panel"><h2>Weekly allocation trend</h2><p class="sub">Post-expense balance allocated across the salary cycle ${cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}. Next payday: ${cycle.nextPayday.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}.</p><div class="trend-report">${weeks.map(w=>{
     const active=anchor>=w.s&&anchor<=w.e;
     return `<div class="trend-item"><div class="trend-bars"><i class="balance" style="height:${Math.max(Math.abs(share)/max*100,1)}%;${active?'filter:brightness(1.25);':''}"></i></div><span>${esc(w.label)}</span></div>`
-  }).join('')}</div><div class="chart-key"><span><i style="background:var(--cyan)"></i>Weekly allocation</span><span>${money(remaining)} monthly remaining</span></div></section>`
+  }).join('')}</div><div class="chart-key"><span><i style="background:var(--cyan)"></i>Weekly allocation</span><span>${money(remaining)} cycle remaining</span></div></section>`
 }
 
-function weeklyAllocationReportHtml(){if(period!=='week')return'';const anchor=parse($('periodAnchor').value),tx=monthTransactionsForDate(anchor),income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),remaining=income-expense,weeks=monthWeekBuckets(anchor),share=weeks.length?remaining/weeks.length:0,max=Math.max(Math.abs(share),1);return `<div class="metrics"><div class="card"><div class="metric-label">Monthly remaining balance</div><div class="v">${money(remaining)}</div></div><div class="card"><div class="metric-label">Weeks in month</div><div class="v">${weeks.length}</div></div><div class="card"><div class="metric-label">Selected week allocation</div><div class="v">${money(share)}</div></div></div><section class="panel allocation-report"><h2>Remaining balance by week</h2><p class="sub">This report starts after monthly expenses have already been deducted. It only tracks how the remaining balance is allocated across the month.</p><div class="week-grid">${weeks.map(w=>{const active=anchor>=w.s&&anchor<=w.e;return `<div class="week-box ${active?'active':''}"><span>${esc(w.label)} · ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</span><b>${money(share)}</b><small>${active?'Selected week':'Remaining-balance allocation'}</small></div>`}).join('')}</div></section><section class="panel"><h2>Weekly allocation visualization</h2><p class="sub">Equal share of the post-expense monthly balance across each week bucket.</p><div class="hbars">${weeks.map(w=>{const active=anchor>=w.s&&anchor<=w.e;return `<div class="hrow"><span>${esc(w.label)}</span><div class="htrack"><i class="balance" style="width:${Math.max(Math.abs(share)/max*100,1)}%"></i></div><b>${money(share)}</b></div>`}).join('')}</div></section>`}
+function weeklyAllocationReportHtml(){
+  if(period!=='week')return'';
+  const anchor=parse($('periodAnchor').value),
+    cycle=payCycleForDate(anchor),
+    tx=payCycleTransactions(anchor),
+    income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),
+    expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),
+    remaining=income-expense,
+    weeks=payCycleWeekBuckets(anchor),
+    share=weeks.length?remaining/weeks.length:0,
+    max=Math.max(Math.abs(share),1);
+
+  return `<div class="metrics"><div class="card"><div class="metric-label">Pay-cycle remaining balance</div><div class="v">${money(remaining)}</div></div><div class="card"><div class="metric-label">Weeks in cycle</div><div class="v">${weeks.length}</div></div><div class="card"><div class="metric-label">Selected week allocation</div><div class="v">${money(share)}</div></div></div><section class="panel allocation-report"><h2>Remaining balance by week</h2><p class="sub">Salary cycle: ${cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}. Next payday: ${cycle.nextPayday.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}.</p><div class="week-grid">${weeks.map(w=>{const active=anchor>=w.s&&anchor<=w.e;return `<div class="week-box ${active?'active':''}"><span>${esc(w.label)} · ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</span><b>${money(share)}</b><small>${active?'Selected week':'Pay-cycle allocation'}</small></div>`}).join('')}</div></section><section class="panel"><h2>Weekly allocation visualization</h2><p class="sub">Equal share of the post-expense salary-cycle balance across each week bucket.</p><div class="hbars">${weeks.map(w=>`<div class="hrow"><span>${esc(w.label)}</span><div class="htrack"><i class="balance" style="width:${Math.max(Math.abs(share)/max*100,1)}%"></i></div><b>${money(share)}</b></div>`).join('')}</div></section>`
+}
 function reportNexusCss(){return `:root{--bg:#04060b;--surface:rgba(12,18,28,.78);--border:rgba(255,255,255,.11);--text:#f5f8ff;--muted:#7d899c;--cyan:#56f5e4;--blue:#769aff;--purple:#b786ff;--green:#56f5a8;--red:#ff6b7a;--radius:22px}*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-height:100vh;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 28% 4%,rgba(118,154,255,.12),transparent 34rem),radial-gradient(circle at 95% 0%,rgba(86,245,228,.10),transparent 30rem),var(--bg)}body.light{--bg:#edf3f7;--surface:rgba(255,255,255,.88);--border:rgba(15,23,42,.11);--text:#111827;--muted:#667085;--cyan:#0e9f9d;--blue:#4f6df5;--purple:#8b5cf6;--green:#059669;--red:#dc2626;background:radial-gradient(circle at 28% 4%,rgba(79,109,245,.08),transparent 34rem),radial-gradient(circle at 95% 0%,rgba(14,165,163,.08),transparent 30rem),var(--bg)}body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.14;background-image:radial-gradient(circle,rgba(130,210,255,.55) .7px,transparent .85px);background-size:28px 28px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}body.light:after{opacity:.08}.report-shell{max-width:1180px;margin:auto;padding:34px 28px 70px}.report-head{border:1px solid var(--border);border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02));backdrop-filter:blur(18px);box-shadow:0 18px 60px rgba(0,0,0,.18);margin-bottom:18px}.brandline{display:flex;align-items:center;gap:10px}.mark{width:34px;height:34px;border-radius:11px;border:1px solid color-mix(in srgb,var(--cyan) 32%,transparent);display:grid;place-items:center;color:var(--cyan);background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 11%,transparent),color-mix(in srgb,var(--purple) 9%,transparent));font:700 14px ui-monospace,monospace;text-shadow:0 0 10px color-mix(in srgb,var(--cyan) 55%,transparent)}.eyebrow,.metric-label{font:400 9.5px ui-monospace,monospace;letter-spacing:1.25px;text-transform:uppercase;color:var(--muted)}h1{font-size:clamp(2rem,5vw,3.8rem);line-height:.98;letter-spacing:-.05em;font-weight:300;margin:18px 0 9px}h1 span{color:var(--cyan)}h2{font-size:1.05rem;font-weight:450;margin:0 0 5px}.sub,small{color:var(--muted)}.sub{font-size:13px;line-height:1.55;margin:0}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}.card,.panel,.detail-drawer{border:1px solid var(--border);border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.065),rgba(255,255,255,.018));backdrop-filter:blur(18px);box-shadow:0 15px 55px rgba(0,0,0,.16)}body.light .card,body.light .panel,body.light .detail-drawer,body.light .report-head{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.74));box-shadow:0 15px 45px rgba(15,23,42,.08)}.card,.panel{padding:18px}.panel{margin:16px 0}.v{font-size:clamp(1.5rem,3vw,2.35rem);font-weight:300;letter-spacing:-.04em;margin-top:14px}.card:nth-child(1) .v{color:var(--green)}.card:nth-child(2) .v{color:var(--red)}.card:nth-child(3) .v{color:var(--cyan)}.card:nth-child(4) .v{color:var(--blue)}.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.hbars{display:grid;gap:13px;margin-top:16px}.hrow{display:grid;grid-template-columns:90px 1fr 110px;gap:10px;align-items:center;font-size:13px}.hrow b{text-align:right}.htrack{height:12px;background:rgba(255,255,255,.055);border:1px solid var(--border);border-radius:999px;overflow:hidden}.htrack i{display:block;height:100%;border-radius:999px}.income{background:linear-gradient(90deg,rgba(86,245,168,.45),var(--green))}.expense{background:linear-gradient(90deg,rgba(255,107,122,.35),var(--red))}.balance{background:linear-gradient(90deg,var(--cyan),var(--blue))}.donut-layout{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;margin-top:12px}.donut{width:140px;height:140px;border-radius:50%;position:relative;display:grid;place-items:center;box-shadow:inset -16px -12px 44px rgba(0,0,0,.28),0 0 30px rgba(86,245,228,.06)}.donut:after{content:"";position:absolute;inset:29%;border-radius:50%;background:#090d14;border:1px solid var(--border)}body.light .donut:after{background:#fff}.donut span{position:relative;z-index:2;text-align:center;font-size:16px}.donut span small{display:block;font:400 8.5px ui-monospace,monospace;text-transform:uppercase;margin-top:3px}.legend{display:grid;gap:8px}.legend>div{display:grid;grid-template-columns:9px 1fr auto;gap:8px;align-items:center;font-size:12px}.legend i{width:9px;height:9px;border-radius:50%}.trend-report{height:200px;display:flex;gap:9px;align-items:end;border-bottom:1px solid var(--border);padding:14px 6px 0}.trend-item{flex:1;height:100%;display:grid;grid-template-rows:1fr 20px;min-width:0}.trend-bars{display:flex;align-items:end;gap:3px;height:100%}.trend-bars i{flex:1;min-height:2px;border-radius:6px 6px 0 0}.trend-item>span{text-align:center;font:400 8.5px ui-monospace,monospace;color:var(--muted);padding-top:5px}.chart-key{display:flex;gap:18px;justify-content:flex-end;margin-top:10px;font-size:11.5px;color:var(--muted)}.chart-key i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.income-dot{background:var(--green)}.expense-dot{background:var(--red)}.week-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:14px}.week-box{border:1px solid var(--border);border-radius:14px;padding:13px;background:rgba(255,255,255,.025)}.week-box.active{border-color:color-mix(in srgb,var(--cyan) 42%,var(--border));background:color-mix(in srgb,var(--cyan) 7%,transparent);box-shadow:0 0 22px rgba(86,245,228,.04)}.week-box span{display:block;font:400 9.5px ui-monospace,monospace;color:var(--muted);letter-spacing:.5px}.week-box b{display:block;font-size:18px;font-weight:500;color:var(--cyan);margin-top:7px}.week-box small{display:block;margin-top:5px;font-size:10.5px}.detail-drawer{margin:18px 0;overflow:hidden}.detail-drawer summary{cursor:pointer;list-style:none;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:400 9px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}.detail-drawer summary::-webkit-details-marker{display:none}.detail-drawer summary:after{content:"+";font-size:18px}.detail-drawer[open] summary:after{content:"−"}.drawer-content{padding:0 18px 18px}.callout{border:1px solid color-mix(in srgb,var(--cyan) 22%,var(--border));border-radius:14px;padding:12px 14px;background:color-mix(in srgb,var(--cyan) 5%,transparent);color:var(--muted);font-size:13px;line-height:1.5}table{width:100%;border-collapse:collapse;margin-top:12px;min-width:680px}th,td{padding:10px 11px;border-bottom:1px solid var(--border);text-align:left;font-size:12px}th{font:400 9.5px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02)}.table-scroll{overflow:auto;border:1px solid var(--border);border-radius:14px}.empty-report{padding:24px;text-align:center;color:var(--muted);font-size:13px}.eyebrow,.metric-label{font-size:9.5px}.sub{font-size:13px}.hrow{font-size:13px}.legend>div{font-size:12px}.trend-item>span{font-size:8.5px}.chart-key{font-size:11.5px}.week-box span{font-size:9.5px}.week-box small{font-size:10px}.detail-drawer summary{font-size:10.5px}.callout{font-size:13px}th{font-size:9.5px}td{font-size:12px}.empty-report{font-size:13px}@media(max-width:800px){.metrics,.chart-grid{grid-template-columns:1fr 1fr}.donut-layout{grid-template-columns:1fr}.hrow{grid-template-columns:70px 1fr 90px}}@media(max-width:540px){.report-shell{padding:20px 12px 50px}.metrics,.chart-grid{grid-template-columns:1fr}.hrow{grid-template-columns:58px 1fr 80px}}@media print{body{background:#fff!important;color:#111!important}.report-shell{max-width:none;padding:0}.report-head,.card,.panel,.detail-drawer{box-shadow:none;backdrop-filter:none;break-inside:avoid}.detail-drawer{display:block}.detail-drawer summary{display:none}.detail-drawer .drawer-content{padding:0}.detail-drawer:not([open]) .drawer-content{display:block}.trend-report{height:160px}}`}
 function weeklyDetailReportHtml(){const tx=rangeTransactions(),inc=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),exp=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),bud=periodBudgetMap(),planned=Object.values(bud).reduce((a,b)=>a+Number(b),0),cats=[...new Set([...Object.keys(bud),...tx.filter(x=>x.type==='expense').map(x=>x.category)])],budgetRows=cats.map(c=>{const a=tx.filter(x=>x.type==='expense'&&x.category===c).reduce((q,x)=>q+Number(x.amount),0);return `<tr><td>${esc(c)}</td><td>${money(bud[c]||0)}</td><td>${money(a)}</td><td>${money(Number(bud[c]||0)-a)}</td></tr>`}).join(''),rows=tx.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.type)}</td><td>${esc(t.category)}</td><td>${esc(t.note||'')}</td><td>${money(t.amount)}</td></tr>`).join('');return `<details class="detail-drawer"><summary>Show accounting details</summary><div class="drawer-content"><div class="metrics"><div class="card"><div class="metric-label">Income</div><div class="v">${money(inc)}</div></div><div class="card"><div class="metric-label">Expenses</div><div class="v">${money(exp)}</div></div><div class="card"><div class="metric-label">Remaining balance</div><div class="v">${money(inc-exp)}</div></div><div class="card"><div class="metric-label">Planned expenses</div><div class="v">${money(planned)}</div></div></div>${reportChartsHtml(tx,inc,exp)}<section class="panel"><h2>Budget vs actual</h2><p class="sub">Optional accounting detail for the selected week.</p><div class="table-scroll"><table><thead><tr><th>Category</th><th>Planned</th><th>Expenses</th><th>Remaining plan</th></tr></thead><tbody>${budgetRows||'<tr><td colspan="4">No category data for this week.</td></tr>'}</tbody></table></div></section><section class="panel"><h2>Transactions</h2><p class="sub">Optional transaction detail for the selected week.</p><div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Amount</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No transactions for this week.</td></tr>'}</tbody></table></div></section></div></details>`}
 $('reportBtn').onclick=()=>{const light=document.body.classList.contains('light'),bodyClass=light?'light':'',generated=new Date().toLocaleString();if(period==='week'){const {s}=periodBounds();const html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus Weekly Remaining Balance Report</title><style>${reportNexusCss()}</style></head><body class="${bodyClass}"><main class="report-shell"><header class="report-head"><div class="brandline"><div class="mark">N</div><div class="eyebrow">NEXUS BUDGET 2060 // WEEKLY REMAINING BALANCE</div></div><h1>${esc($('periodLabel').textContent)} <span>Report</span></h1><p class="sub">Generated locally ${generated}. The primary weekly view tracks only the balance remaining after monthly expenses. Accounting details are available below but collapsed by default.</p></header>${weeklyAllocationReportHtml()}${weeklyAllocationTrendReportHtml()}${weeklyDetailReportHtml()}</main></body></html>`;download(`nexus-budget-report-week-${iso(s)}.html`,html,'text/html');return}const actualTx=rangeTransactions(),tx=period==='year'?annualizedMonthTransactions():actualTx,{s}=periodBounds(),inc=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0),exp=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0),bud=periodBudgetMap(),planned=Object.values(bud).reduce((a,b)=>a+Number(b),0),cats=[...new Set([...Object.keys(bud),...tx.filter(x=>x.type==='expense').map(x=>x.category)])],budgetRows=cats.map(c=>{const a=tx.filter(x=>x.type==='expense'&&x.category===c).reduce((q,x)=>q+Number(x.amount),0);return `<tr><td>${esc(c)}</td><td>${money(bud[c]||0)}</td><td>${money(a)}</td><td>${money(Number(bud[c]||0)-a)}</td></tr>`}).join(''),detailRows=actualTx.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.type)}</td><td>${esc(t.category)}</td><td>${esc(t.note||'')}</td><td>${money(t.amount)}</td></tr>`).join('');const annualNote=period==='year'?'<p class="callout">Annual figures are projected from the selected month × 12, providing a high-level yearly account view.</p>':'';const html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus Budget Report</title><style>${reportNexusCss()}</style></head><body class="${bodyClass}"><main class="report-shell"><header class="report-head"><div class="brandline"><div class="mark">N</div><div class="eyebrow">NEXUS BUDGET 2060 // ${period.toUpperCase()} REPORT</div></div><h1>${esc($('periodLabel').textContent)} <span>Report</span></h1><p class="sub">Generated locally ${generated}. No financial data was uploaded.</p></header>${annualNote}<div class="metrics"><div class="card"><div class="metric-label">Income</div><div class="v">${money(inc)}</div></div><div class="card"><div class="metric-label">Expenses</div><div class="v">${money(exp)}</div></div><div class="card"><div class="metric-label">Remaining balance</div><div class="v">${money(inc-exp)}</div></div><div class="card"><div class="metric-label">Planned expenses</div><div class="v">${money(planned)}</div></div></div>${reportChartsHtml(tx,inc,exp)}<section class="panel"><h2>${period==='year'?'Annual expense accounts':'Budget vs actual'}</h2><p class="sub">${period==='year'?'High-level annualized expense account totals by category.':'Planned versus actual expense totals by category.'}</p><div class="table-scroll"><table><thead><tr><th>Category</th><th>Planned</th><th>Expenses</th><th>Remaining plan</th></tr></thead><tbody>${budgetRows||'<tr><td colspan="4">No category data for this period.</td></tr>'}</tbody></table></div></section>${period==='year'?'':`<section class="panel"><h2>Transactions</h2><p class="sub">Transactions recorded in the selected ${period}.</p><div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Amount</th></tr></thead><tbody>${detailRows||'<tr><td colspan="5">No transactions for this period.</td></tr>'}</tbody></table></div></section>`}</main></body></html>`;download(`nexus-budget-report-${period}-${iso(s)}.html`,html,'text/html')}
