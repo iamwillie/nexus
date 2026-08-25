@@ -481,11 +481,10 @@ document.body.classList.toggle('standalone',STANDALONE_MODE);
 // Supabase configuration. Replace these placeholders before publishing the cloud-enabled version.
 const SUPABASE_URL='https://ngtvwnkqkujvptsmcnfo.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_Cmm_PR2Q4Lqx2sNM648FgQ_8RYrj_5z';
-
+const APP_URL='https://iamwillie.github.io/nexus/'; // Set this to your live GitHub Pages URL.
 const SUPABASE_CONFIGURED=SUPABASE_URL.startsWith('https://')&&!SUPABASE_URL.includes('YOUR_PROJECT')&&SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_')&&!SUPABASE_PUBLISHABLE_KEY.includes('YOUR_KEY');
 const supabaseClient=SUPABASE_CONFIGURED&&window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
 const SYNC_META_KEY='nexus-budget-2060-sync-meta-v1';
-
 let currentUser=null, syncTimer=null, cloudBusy=false;
 function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META_KEY)||'{}')}catch{return{}}}
 function saveSyncMeta(v){localStorage.setItem(SYNC_META_KEY,JSON.stringify(v))}
@@ -550,7 +549,29 @@ async function migrateOrSyncCloud(){
   }catch(error){console.error('Nexus cloud load failed:',error);setCloudStatus('error','CLOUD ERROR');setAuthStatus(error.message||'Cloud connection failed.',true)}
 }
 async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthStatus('Enter your email and password.');return}setAuthStatus('Signing in...');try{const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;currentUser=data.user;setAuthStatus('Signed in. Loading your data...',true);refreshCloudUi();await migrateOrSyncCloud()}catch(error){setAuthStatus(error.message||'Sign in failed.')}}
-async function signUp(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthStatus('Enter an email and password.');return}setAuthStatus('Creating account...');try{const {data,error}=await supabaseClient.auth.signUp({email,password});if(error)throw error;if(data.user&&data.session){currentUser=data.user;refreshCloudUi();await migrateOrSyncCloud();setAuthStatus('Account created.',true)}else{setAuthStatus('Account created. Check your email if confirmation is required.')}}catch(error){setAuthStatus(error.message||'Account creation failed.')}}
+async function signUp(){
+  const email=$('authEmail').value.trim(),password=$('authPassword').value;
+  if(!email||!password){setAuthStatus('Enter an email and password.');return}
+  setAuthStatus('Creating account...');
+  try{
+    const {data,error}=await supabaseClient.auth.signUp({
+      email,
+      password,
+      options:{emailRedirectTo:APP_URL}
+    });
+    if(error)throw error;
+    if(data.user&&data.session){
+      currentUser=data.user;
+      refreshCloudUi();
+      await migrateOrSyncCloud();
+      setAuthStatus('Account created.',true);
+    }else{
+      setAuthStatus('Account created. Check your email to confirm your account.');
+    }
+  }catch(error){
+    setAuthStatus(error.message||'Account creation failed.')
+  }
+}
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
 const STORAGE_KEY='nexus-budget-2060-v1';
@@ -1143,13 +1164,47 @@ $('useCloudBtn').onclick=async()=>{try{const cloud=await fetchCloudState();if(cl
 $('uploadLocalBtn').onclick=async()=>{try{$('cloudConflictPanel').classList.remove('show');await pushCloudState(true);setAuthStatus('This device was uploaded to the cloud.',true)}catch(error){setAuthStatus(error.message||'Unable to upload this device.',true)}};
 $('conflictUseCloud').onclick=async()=>{$('cloudConflictPanel').classList.remove('show');const cloud=await fetchCloudState();if(cloud)await useCloudState(cloud);setAuthStatus('Using cloud data.',true)};
 $('conflictUseLocal').onclick=async()=>{$('cloudConflictPanel').classList.remove('show');await pushCloudState(true);setAuthStatus('This device was uploaded to the cloud.',true)};
+
+async function processAuthRedirect(){
+  if(!supabaseClient)return null;
+  try{
+    const url=new URL(window.location.href);
+    const code=url.searchParams.get('code');
+
+    if(code){
+      const {data,error}=await supabaseClient.auth.exchangeCodeForSession(code);
+      if(error)throw error;
+
+      url.searchParams.delete('code');
+      const query=url.searchParams.toString();
+      history.replaceState({},document.title,url.pathname+(query?`?${query}`:'')+url.hash);
+      return data.session?.user||null;
+    }
+
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    return session?.user||null;
+  }catch(error){
+    console.error('Nexus auth confirmation callback failed:',error);
+    setCloudStatus('error','AUTH ERROR');
+    setAuthStatus(error.message||'Email confirmation could not be completed.');
+    return null;
+  }
+}
+
 refreshCloudUi();
 if(SUPABASE_CONFIGURED){
-  supabaseClient.auth.getSession().then(async({data})=>{
-    currentUser=data.session?.user||null;refreshCloudUi();if(currentUser)await migrateOrSyncCloud();
-  });
+  processAuthRedirect().then(async(user)=>{
+    currentUser=user;
+    refreshCloudUi();
+    if(currentUser)await migrateOrSyncCloud();
+  }).catch(error=>console.error('Nexus auth initialization failed:',error));
+
   supabaseClient.auth.onAuthStateChange((event,session)=>{
-    setTimeout(async()=>{currentUser=session?.user||null;refreshCloudUi();if(currentUser&&event!=='INITIAL_SESSION')await migrateOrSyncCloud()},0);
+    setTimeout(async()=>{
+      currentUser=session?.user||null;
+      refreshCloudUi();
+      if(currentUser&&event!=='INITIAL_SESSION')await migrateOrSyncCloud();
+    },0);
   });
 }
 
