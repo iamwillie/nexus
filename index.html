@@ -646,6 +646,7 @@ function weeklyLockedAllocation(date){
   return {
     cycle,
     weeks:result,
+    baseRemaining:Number(snapshot.allocationTotal)||0,
     allocationTotal:Number(snapshot.allocationTotal)||0,
     baseShare:Number(snapshot.baseShare)||0,
     snapshotCreatedAt
