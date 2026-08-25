@@ -336,7 +336,7 @@ body.standalone .add-fab{
       <input id="customPaydayDay" type="number" min="1" max="28" step="1" value="25">
       <div class="small" style="margin-top:6px">Custom recurring days are limited to 1–28 so every month has the date.</div>
     </div>
-    <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button></div>
+    <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button><button class="btn danger" id="resetCurrentAllocation" type="button">Recalculate current cycle</button></div>
   </div>
 </div>
 
@@ -422,7 +422,7 @@ document.body.classList.toggle('standalone',STANDALONE_MODE);
 
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
-const DEFAULT={version:3,transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25}};
+const DEFAULT={version:3,transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
 let state=loadState(), period='month', editingId=null;
 let weeklyDetailsExpanded=false;
 const $=id=>document.getElementById(id);
@@ -441,7 +441,7 @@ function normalizeState(raw){
     createdAt:Number(t.createdAt)||Date.now()+i
   })).filter(t=>/^\d{4}-\d{2}-\d{2}$/.test(t.date)&&t.amount>=0);
   if(raw.budgets&&typeof raw.budgets==='object'&&!Array.isArray(raw.budgets)) clean.budgets=raw.budgets;
-  if(raw.settings&&typeof raw.settings==='object'){clean.settings={...clean.settings,...raw.settings}}
+  if(raw.settings&&typeof raw.settings==='object'){clean.settings={...clean.settings,...raw.settings};if(!clean.settings.allocationSnapshots||typeof clean.settings.allocationSnapshots!=='object')clean.settings.allocationSnapshots={}}
   clean.version=Number(raw.version)||DEFAULT.version;
   return clean;
 }
@@ -584,23 +584,72 @@ function monthTransactionsForDate(d){const s=new Date(d.getFullYear(),d.getMonth
 function monthWeekBuckets(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0),arr=[];for(let cur=new Date(s),idx=1;cur<=e;idx++){const bs=new Date(cur),be=new Date(cur);be.setDate(Math.min(cur.getDate()+6,e.getDate()));arr.push({label:`W${idx}`,s:bs,e:be});cur=new Date(be);cur.setDate(cur.getDate()+1)}return arr}
 
 function weeklyLockedAllocation(date){
-  const cycle=payCycleForDate(date),tx=payCycleTransactions(date),weeks=payCycleWeekBuckets(date);
-  const income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0);
-  const expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
-  const baseRemaining=income-expense;
-  const baseShare=weeks.length?baseRemaining/weeks.length:0;
+  const cycle=payCycleForDate(date),
+    tx=payCycleTransactions(date),
+    weeks=payCycleWeekBuckets(date),
+    key=iso(cycle.start);
+
+  state.settings=state.settings||{};
+  state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
+
+  let snapshot=state.settings.allocationSnapshots[key];
+  if(!snapshot){
+    const income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0);
+    const expense=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
+    const baseRemaining=income-expense;
+    snapshot={
+      cycleStart:key,
+      cycleEnd:iso(cycle.end),
+      allocationTotal:baseRemaining,
+      baseShare:weeks.length?baseRemaining/weeks.length:0,
+      createdAt:Date.now()
+    };
+    state.settings.allocationSnapshots[key]=snapshot;
+    saveState();
+  }
+
+  const snapshotCreatedAt=Number(snapshot.createdAt)||0;
+  const weeklySpent=weeks.map(w=>{
+    const items=tx.filter(t=>{
+      const d=parse(t.date);
+      const created=Number(t.createdAt)||0;
+      return d>=w.s&&d<=w.e&&created>snapshotCreatedAt&&t.type==='expense';
+    });
+    return items.reduce((a,b)=>a+Number(b.amount),0);
+  });
+
   const result=[];
   let carry=0;
   weeks.forEach((w,i)=>{
-    const weekTx=tx.filter(t=>{const d=parse(t.date);return d>=w.s&&d<=w.e});
-    const spent=weekTx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
-    const allowance=baseShare+carry;
+    const baseAllocation=Number(snapshot.baseShare)||0;
+    const allowance=baseAllocation+carry;
+    const spent=weeklySpent[i]||0;
     const remaining=allowance-spent;
     const carryOut=Math.max(remaining,0);
-    result.push({...w,index:i,baseAllocation:baseShare,carryIn:carry,allowance,spent,remaining,carryOut,overspent:Math.min(remaining,0)});
-    carry=carryOut;
+    result.push({
+      ...w,
+      index:i,
+      baseAllocation,
+      carryIn:carry,
+      allowance,
+      spent,
+      remaining,
+      carryOut,
+      overspent:Math.min(remaining,0),
+      closed:cycle.end>=w.e
+    });
+    // Forward carry is applied only after the week has ended.
+    if(w.e<new Date()) carry=carryOut;
+    else carry=0;
   });
-  return {cycle,weeks:result,income,expense,baseRemaining,baseShare,finalCarry:carry};
+
+  return {
+    cycle,
+    weeks:result,
+    allocationTotal:Number(snapshot.allocationTotal)||0,
+    baseShare:Number(snapshot.baseShare)||0,
+    snapshotCreatedAt
+  };
 }
 
 function renderWeeklyAllocation(){
@@ -610,7 +659,7 @@ function renderWeeklyAllocation(){
   const anchor=parse($('periodAnchor').value),data=weeklyLockedAllocation(anchor);
   const activeIndex=Math.max(0,data.weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
   $('allocationSummary').innerHTML=
-    `<div class="allocation-stat"><div class="micro">Pay-cycle remaining balance</div><div class="v" style="color:var(--cyan)">${money(data.baseRemaining)}</div><div class="small" style="margin-top:5px">${data.cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${data.cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div></div>
+    `<div class="allocation-stat"><div class="micro">Pay-cycle allocated balance</div><div class="v" style="color:var(--cyan)">${money(data.baseRemaining)}</div><div class="small" style="margin-top:5px">${data.cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${data.cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div></div>
      <div class="allocation-stat"><div class="micro">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div><div class="small" style="margin-top:5px">Unused money carries forward only</div></div>
      <div class="allocation-stat"><div class="micro">Current week remaining</div><div class="v" style="color:${data.weeks[activeIndex]&&data.weeks[activeIndex].remaining<0?'var(--red)':'var(--blue)'}">${money(data.weeks[activeIndex]?.remaining||0)}</div></div>`;
   $('allocationWeeks').innerHTML=data.weeks.map(w=>{
@@ -619,7 +668,7 @@ function renderWeeklyAllocation(){
     return `<div class="allocation-week ${active?'active':''} ${w.overspent<0?'over':''}">
       <div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div>
       <div class="amt">${money(w.allowance)}</div>
-      <div class="small" style="margin-top:4px">${w.carryIn>0?`Includes ${money(w.carryIn)} carry-over`:'Base allocation'}</div>
+      <div class="small" style="margin-top:4px">${w.carryIn>0?`Includes ${money(w.carryIn)} carry-over`:'Locked base allocation'}</div>
       <div class="spent">Spent ${money(w.spent)}</div>
       <div class="remaining">${money(w.remaining)} remaining</div>
       <div class="carry">${status}</div>
@@ -767,6 +816,17 @@ document.querySelectorAll('[data-payday-mode]').forEach(btn=>btn.onclick=()=>{
   if(btn.dataset.paydayDay)$('customPaydayDay').value=btn.dataset.paydayDay;
   updatePaydayOptions();
 });
+
+$('resetCurrentAllocation').onclick=()=>{
+  const cycle=payCycleForDate(parse($('periodAnchor').value));
+  state.settings=state.settings||{};
+  state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
+  delete state.settings.allocationSnapshots[iso(cycle.start)];
+  saveState();
+  refreshPaydayUi();
+  render();
+  closePaydayModal();
+};
 $('savePaydaySettings').onclick=()=>{
   if(pendingPaydayMode==='last'){
     state.settings={...(state.settings||{}),paydayMode:'last',paydayDay:31};
@@ -918,7 +978,7 @@ function weeklyAllocationReportHtml(){
   </div>
   <section class="panel allocation-report">
     <h2>Remaining balance by week</h2>
-    <p class="sub">Each week is locked to its allowance. Weekly expenses reduce only that week's allowance. Unused money can carry into the next week when the week closes.</p>
+    <p class="sub">The pay-cycle balance is locked when the cycle is first opened in Weekly view. Spending added after that point reduces only the week it belongs to. Unused money carries into the next week when the week closes.</p>
     <div class="week-grid">${data.weeks.map(w=>{
       const active=w.index===activeIndex;
       const status=w.overspent<0?`Overspent ${money(Math.abs(w.overspent))}`:w.carryOut>0?`Carries ${money(w.carryOut)} forward`:'Fully used';
