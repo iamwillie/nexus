@@ -237,6 +237,24 @@ body.standalone .add-fab{
   .payday-options{grid-template-columns:1fr}
 }
 
+
+.cloud-control{display:inline-flex;align-items:center;gap:8px}
+.cloud-status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);box-shadow:0 0 8px rgba(125,137,156,.18);flex:0 0 auto}
+.cloud-status-dot.ready{background:var(--cyan);box-shadow:0 0 12px rgba(86,245,228,.42)}
+.cloud-status-dot.syncing{background:var(--amber);box-shadow:0 0 12px rgba(255,198,109,.42);animation:pulse 1s infinite}
+.cloud-status-dot.synced{background:var(--green);box-shadow:0 0 12px rgba(86,245,168,.42)}
+.cloud-status-dot.error{background:var(--red);box-shadow:0 0 12px rgba(255,107,122,.42)}
+.auth-copy{color:var(--muted);font-size:.84rem;line-height:1.55;margin:0 0 14px}
+.auth-status{min-height:22px;color:var(--green);font-size:.84rem;margin-top:10px}
+.auth-account{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025);margin-bottom:14px}
+.auth-email{font-size:.86rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.auth-actions .btn{flex:1;min-width:150px}
+.conflict-panel{display:none;padding:13px;border:1px solid rgba(255,198,109,.25);border-radius:13px;background:rgba(255,198,109,.05);margin-top:12px}
+.conflict-panel.show{display:block}
+.conflict-panel h4{margin:0 0 6px;font-size:.95rem;font-weight:450;color:var(--amber)}
+.sync-note{font-size:.76rem;color:var(--muted);line-height:1.45;margin-top:9px}
+
 </style>
 </head>
 <body>
@@ -256,9 +274,9 @@ body.standalone .add-fab{
         stroke="url(#nexusLogoGradient)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="14" cy="47" r="2.2" fill="#56f5e4"/>
   <circle cx="51" cy="13" r="2.2" fill="#b786ff"/>
-</svg></div><div><h1>NEXUS BUDGET</h1><div class="subtitle">Local-first personal finance console.</div><div class="online micro"><span class="dot"></span>LOCAL VAULT ONLINE</div></div></div>
+</svg></div><div><h1>NEXUS BUDGET</h1><div class="subtitle">Local-first personal finance console.</div><div class="online micro"><span class="dot"></span><span id="localVaultText">LOCAL VAULT ONLINE</span><span style="opacity:.5">//</span><span class="cloud-control"><span class="cloud-status-dot" id="cloudStatusDot"></span><span id="cloudStatusText">CLOUD NOT CONFIGURED</span></span></div></div></div>
   <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-expanded="false" aria-controls="headerActions" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-  <div class="actions" id="headerActions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="exportBtn">Export JSON</button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">Download Report</button><button class="btn danger" id="resetBtn">Reset Data</button><button class="btn icon-btn" id="shareBtn" type="button" aria-label="Share backup" title="Share backup">
+  <div class="actions" id="headerActions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="cloudSyncBtn" type="button">Cloud Sync</button><button class="btn" id="exportBtn">Export JSON</button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">Download Report</button><button class="btn danger" id="resetBtn">Reset Data</button><button class="btn icon-btn" id="shareBtn" type="button" aria-label="Share backup" title="Share backup">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
 <path d="M8.6 10.7 15.4 6.3M8.6 13.3l6.8 4.4"></path>
@@ -340,6 +358,44 @@ body.standalone .add-fab{
   </div>
 </div>
 
+
+<div class="modal" id="cloudModal" role="dialog" aria-modal="true" aria-labelledby="cloudModalTitle">
+  <div class="card modal-card">
+    <div class="heading">
+      <div class="heading-left">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M7 3h10v18H7z"/><path d="M9 11h6M9 15h4"/></svg></span>
+        <div><h3 id="cloudModalTitle">Cloud Sync</h3><div class="micro" style="margin-top:4px">SUPABASE ACCOUNT // OPTIONAL UNTIL CONFIGURED</div></div>
+      </div>
+      <button class="btn modal-close" id="closeCloudModal" type="button" aria-label="Close cloud sync">x</button>
+    </div>
+
+    <div id="cloudConfigPanel">
+      <p class="auth-copy">Add your Supabase project URL and publishable key in the HTML configuration section. Nexus will continue working locally until the cloud connection is configured.</p>
+      <div class="callout" style="margin-top:8px">Cloud sync is disabled until both placeholders are replaced.</div>
+    </div>
+
+    <div id="authPanel" style="display:none">
+      <div id="signedOutPanel">
+        <p class="auth-copy">Sign in to back up your Nexus state and use the same budget on another device.</p>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="field"><label class="micro">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+          <div class="field"><label class="micro">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+        </div>
+        <div class="auth-actions"><button class="btn primary" id="loginBtn" type="button">Sign in</button><button class="btn" id="signupBtn" type="button">Create account</button></div>
+        <div class="auth-status" id="authStatus"></div>
+      </div>
+
+      <div id="signedInPanel" style="display:none">
+        <div class="auth-account"><span class="auth-email" id="signedInEmail"></span><button class="btn" id="signOutBtn" type="button">Sign out</button></div>
+        <div class="auth-actions"><button class="btn primary" id="syncNowBtn" type="button">Sync now</button><button class="btn" id="useCloudBtn" type="button">Use cloud data</button><button class="btn" id="uploadLocalBtn" type="button">Upload this device</button></div>
+        <div class="sync-note" id="cloudAccountNote">Your local data remains available offline. Cloud sync is handled automatically after changes.</div>
+        <div class="auth-status" id="authStatusSignedIn"></div>
+        <div class="conflict-panel" id="cloudConflictPanel"><h4>Choose which copy to keep</h4><div class="sync-note">This device and the cloud both changed since the last sync. Choose one before continuing.</div><div class="auth-actions"><button class="btn" id="conflictUseCloud" type="button">Use cloud</button><button class="btn primary" id="conflictUseLocal" type="button">Upload this device</button></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="txnModal" role="dialog" aria-modal="true" aria-labelledby="txnModalTitle">
   <div class="card modal-card">
     <div class="heading">
@@ -382,6 +438,7 @@ body.standalone .add-fab{
 </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 
 const STANDALONE_MODE=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -419,6 +476,82 @@ document.body.classList.toggle('standalone',STANDALONE_MODE);
     console.warn('Nexus manifest setup skipped:',error);
   }
 })();
+
+
+// Supabase configuration. Replace these placeholders before publishing the cloud-enabled version.
+const SUPABASE_URL='https://ngtvwnkqkujvptsmcnfo.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_Cmm_PR2Q4Lqx2sNM648FgQ_8RYrj_5z';
+
+const SUPABASE_CONFIGURED=SUPABASE_URL.startsWith('https://')&&!SUPABASE_URL.includes('YOUR_PROJECT')&&SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_')&&!SUPABASE_PUBLISHABLE_KEY.includes('YOUR_KEY');
+const supabaseClient=SUPABASE_CONFIGURED&&window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
+const SYNC_META_KEY='nexus-budget-2060-sync-meta-v1';
+
+let currentUser=null, syncTimer=null, cloudBusy=false;
+function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META_KEY)||'{}')}catch{return{}}}
+function saveSyncMeta(v){localStorage.setItem(SYNC_META_KEY,JSON.stringify(v))}
+function hasFinancialData(s){return Boolean((s.transactions&&s.transactions.length)||Object.keys(s.budgets||{}).length)}
+function setCloudStatus(kind,text){const dot=$('cloudStatusDot'),label=$('cloudStatusText');if(dot)dot.className=`cloud-status-dot ${kind||''}`;if(label)label.textContent=text||'CLOUD';}
+function refreshCloudUi(){
+  if(!SUPABASE_CONFIGURED){setCloudStatus('', 'CLOUD NOT CONFIGURED');$('cloudConfigPanel').style.display='block';$('authPanel').style.display='none';return}
+  $('cloudConfigPanel').style.display='none';$('authPanel').style.display='block';
+  if(currentUser){
+    setCloudStatus('synced','CLOUD SYNCED');
+    $('signedOutPanel').style.display='none';$('signedInPanel').style.display='block';$('signedInEmail').textContent=currentUser.email||'Signed in';
+  }else{
+    setCloudStatus('ready','CLOUD READY');
+    $('signedOutPanel').style.display='block';$('signedInPanel').style.display='none';
+  }
+}
+function openCloudModal(){refreshCloudUi();$('cloudModal').classList.add('open');document.body.classList.add('modal-open')}
+function closeCloudModal(){$('cloudModal').classList.remove('open');document.body.classList.remove('modal-open')}
+function setAuthStatus(msg,signedIn=false){const id=signedIn?'authStatusSignedIn':'authStatus';if($(id))$(id).textContent=msg||''}
+function saveLocalState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));const m=syncMeta();m.localUpdatedAt=new Date().toISOString();m.localUserId=currentUser?.id||m.localUserId||null;saveSyncMeta(m)}
+async function pushCloudState(force=false){
+  if(!SUPABASE_CONFIGURED||!currentUser||cloudBusy)return;
+  cloudBusy=true;setCloudStatus('syncing','SYNCING');
+  try{
+    const m=syncMeta(),changedAt=m.localUpdatedAt||new Date().toISOString();
+    const {error}=await supabaseClient.from('nexus_state').upsert({user_id:currentUser.id,state:structuredClone(state),updated_at:changedAt});
+    if(error)throw error;
+    const next=syncMeta();next.userId=currentUser.id;next.lastSyncedAt=changedAt;next.localUserId=currentUser.id;saveSyncMeta(next);
+    setCloudStatus('synced','SYNCED');setAuthStatus('Cloud sync complete.',true);
+  }catch(error){console.error('Nexus cloud sync failed:',error);setCloudStatus('error','SYNC ERROR');setAuthStatus(error.message||'Cloud sync failed.',true)}finally{cloudBusy=false}
+}
+function queueCloudSync(){if(!SUPABASE_CONFIGURED||!currentUser)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushCloudState(),650)}
+function saveState(){saveLocalState();queueCloudSync()}
+async function fetchCloudState(){
+  const {data,error}=await supabaseClient.from('nexus_state').select('state,updated_at').eq('user_id',currentUser.id).maybeSingle();
+  if(error)throw error;return data;
+}
+async function useCloudState(cloud){
+  state=normalizeState(cloud.state);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  const m=syncMeta();m.userId=currentUser.id;m.lastSyncedAt=cloud.updated_at||new Date().toISOString();m.localUpdatedAt=m.lastSyncedAt;saveSyncMeta(m);render();setCloudStatus('synced','SYNCED');
+}
+async function migrateOrSyncCloud(){
+  if(!currentUser||!SUPABASE_CONFIGURED)return;
+  try{
+    const cloud=await fetchCloudState(),m=syncMeta();
+    if(!cloud){await pushCloudState(true);return}
+    const cloudUpdated=cloud.updated_at||'';
+    const lastSynced=m.userId===currentUser.id?(m.lastSyncedAt||''):'';
+    const localChanged=m.userId===currentUser.id?(m.localUpdatedAt||''):'';
+    if(!lastSynced){
+      if(hasFinancialData(state)){
+        $('cloudConflictPanel').classList.add('show');setAuthStatus('Existing cloud data was found. Choose which copy to keep.',true);openCloudModal();
+      }else{await useCloudState(cloud)}
+      return;
+    }
+    if(localChanged>lastSynced&&cloudUpdated>lastSynced){
+      $('cloudConflictPanel').classList.add('show');setAuthStatus('This device and the cloud both changed since the last sync.',true);openCloudModal();return;
+    }
+    if(cloudUpdated>lastSynced&&!localChanged||cloudUpdated>localChanged){await useCloudState(cloud);return}
+    if(localChanged>lastSynced){await pushCloudState(true);return}
+    setCloudStatus('synced','SYNCED');
+  }catch(error){console.error('Nexus cloud load failed:',error);setCloudStatus('error','CLOUD ERROR');setAuthStatus(error.message||'Cloud connection failed.',true)}
+}
+async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthStatus('Enter your email and password.');return}setAuthStatus('Signing in...');try{const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;currentUser=data.user;setAuthStatus('Signed in. Loading your data...',true);refreshCloudUi();await migrateOrSyncCloud()}catch(error){setAuthStatus(error.message||'Sign in failed.')}}
+async function signUp(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){setAuthStatus('Enter an email and password.');return}setAuthStatus('Creating account...');try{const {data,error}=await supabaseClient.auth.signUp({email,password});if(error)throw error;if(data.user&&data.session){currentUser=data.user;refreshCloudUi();await migrateOrSyncCloud();setAuthStatus('Account created.',true)}else{setAuthStatus('Account created. Check your email if confirmation is required.')}}catch(error){setAuthStatus(error.message||'Account creation failed.')}}
+async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
@@ -998,6 +1131,28 @@ $('reportBtn').onclick=()=>{const light=document.body.classList.contains('light'
 $('resetBtn').onclick=()=>{if(confirm('Delete all locally stored Nexus Budget data? This cannot be undone unless you have an export.')){state=structuredClone(DEFAULT);saveState();render()}}
 const savedTheme=localStorage.getItem(THEME_KEY);applyTheme(savedTheme==='light'?'light':'dark');$('themeToggle').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
 const today=iso(new Date());$('txnDate').value=today;$('periodAnchor').value=today;$('modalBudgetMonth').value=today.slice(0,7);syncPeriodPickerFromAnchor();render();
+
+$('cloudSyncBtn').onclick=openCloudModal;
+$('closeCloudModal').onclick=closeCloudModal;
+$('cloudModal').addEventListener('click',e=>{if(e.target===$('cloudModal'))closeCloudModal()});
+$('loginBtn').onclick=signIn;
+$('signupBtn').onclick=signUp;
+$('signOutBtn').onclick=signOut;
+$('syncNowBtn').onclick=()=>pushCloudState(true);
+$('useCloudBtn').onclick=async()=>{try{const cloud=await fetchCloudState();if(cloud){$('cloudConflictPanel').classList.remove('show');await useCloudState(cloud);setAuthStatus('Using cloud data.',true)}}catch(error){setAuthStatus(error.message||'Unable to load cloud data.',true)}};
+$('uploadLocalBtn').onclick=async()=>{try{$('cloudConflictPanel').classList.remove('show');await pushCloudState(true);setAuthStatus('This device was uploaded to the cloud.',true)}catch(error){setAuthStatus(error.message||'Unable to upload this device.',true)}};
+$('conflictUseCloud').onclick=async()=>{$('cloudConflictPanel').classList.remove('show');const cloud=await fetchCloudState();if(cloud)await useCloudState(cloud);setAuthStatus('Using cloud data.',true)};
+$('conflictUseLocal').onclick=async()=>{$('cloudConflictPanel').classList.remove('show');await pushCloudState(true);setAuthStatus('This device was uploaded to the cloud.',true)};
+refreshCloudUi();
+if(SUPABASE_CONFIGURED){
+  supabaseClient.auth.getSession().then(async({data})=>{
+    currentUser=data.session?.user||null;refreshCloudUi();if(currentUser)await migrateOrSyncCloud();
+  });
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    setTimeout(async()=>{currentUser=session?.user||null;refreshCloudUi();if(currentUser&&event!=='INITIAL_SESSION')await migrateOrSyncCloud()},0);
+  });
+}
+
 // ambient particles
 const canvas=$('particles'),ctx=canvas.getContext('2d');let ps=[];function resize(){const r=devicePixelRatio||1;canvas.width=innerWidth*r;canvas.height=innerHeight*r;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(r,0,0,r,0,0);ps=Array.from({length:Math.min(100,Math.floor(innerWidth/15))},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:Math.random()*1.2+.2,v:Math.random()*.09+.02,o:Math.random()*.2+.04}))}function anim(){ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of ps){p.y-=p.v;if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth}ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fillStyle=`rgba(130,210,255,${p.o})`;ctx.fill()}requestAnimationFrame(anim)}addEventListener('resize',resize);resize();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)anim();
 
