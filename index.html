@@ -602,8 +602,8 @@ async function signUp(){
 }
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}stopCloudRefresh();currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
-const APP_VERSION='1.0.2';
-const BUILD_NUMBER='2026.08.26.1';
+const APP_VERSION='1.0.3';
+const BUILD_NUMBER='2026.08.26.2';
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:3,appVersion:'1.0.0',buildNumber:'2026.08.25.1',transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
@@ -864,7 +864,12 @@ function renderWeeklyAllocation(){
     </div>`;
   }).join('');
 }
-function annualizedMonthTransactions(){const anchor=parse($('periodAnchor').value);return monthTransactionsForDate(anchor).map(t=>({...t,amount:Number(t.amount)*12}))}
+function annualizedMonthTransactions(){
+  const anchor=parse($('periodAnchor').value);
+  return monthTransactionsForDate(anchor)
+    .filter(t=>t.type==='expense'||(t.type==='income'&&String(t.category||'').trim().toLowerCase()==='salary'))
+    .map(t=>({...t,amount:Number(t.amount)*12}));
+}
 function refreshCategories(){const list=$('categoryList');if(!list)return;const categories=new Set();for(const t of state.transactions||[]){const c=String(t.category||'').trim();if(c)categories.add(c)}for(const month of Object.values(state.budgets||{})){for(const c of Object.keys(month||{})){const name=String(c||'').trim();if(name)categories.add(name)}}list.innerHTML=[...categories].sort((a,b)=>a.localeCompare(b)).map(c=>`<option value="${esc(c)}"></option>`).join('')}
 function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}
 function safeRender(name,fn,fallbackId){
@@ -894,7 +899,7 @@ function render(){
   const expensePct=income>0?(expense/income*100):0, incomePct=income>0?100:0;
   $('incomePct').textContent=period==='month'?`${incomePct.toFixed(0)}% of income`:'';
   $('expensePct').textContent=period==='month'?`${expensePct.toFixed(0)}% of income`:'';
-  $('incomeHint').textContent=period==='year'?'Annualized from selected month × 12':'Selected period';$('expenseHint').textContent=period==='year'?'Annualized from selected month × 12':'Selected period';$('budgetHint').textContent=planned?`${money(expense)} of ${money(planned)} planned${period==='year'?' (annualized)':''}`:'No budgets saved';
+  $('incomeHint').textContent=period==='year'?'Salary income × 12':'Selected period';$('expenseHint').textContent=period==='year'?'Annualized from selected month × 12':'Selected period';$('budgetHint').textContent=planned?`${money(expense)} of ${money(planned)} planned${period==='year'?' (annualized)':''}`:'No budgets saved';
   $('recordCount').textContent=`${state.transactions.length} RECORD${state.transactions.length===1?'':'S'}`;
   safeRender('weekly allocation',renderWeeklyAllocation,'allocationWeeks');
   if(!weekly){
