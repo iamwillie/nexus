@@ -131,7 +131,9 @@ td{font-size:.88rem}
 .collapsible-card{padding:0;overflow:hidden}
 .collapsible-card>summary{list-style:none;cursor:pointer;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .collapsible-card>summary::-webkit-details-marker{display:none}
-.collapsible-card>summary .summary-main{display:flex;align-items:center;gap:10px;min-width:0}.collapsible-card>summary .budget-add-btn{margin-left:auto;position:relative;z-index:5;flex:0 0 auto}
+.collapsible-card>summary .summary-main{display:flex;align-items:center;gap:10px;min-width:0}.budget-card-actions{display:flex;justify-content:flex-end;margin-bottom:12px}.budget-card-actions .btn{white-space:nowrap}
+.weekly-allocation .heading .btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:620px){.budget-card-actions{justify-content:stretch}.budget-card-actions .btn{width:100%}.weekly-allocation .heading{align-items:flex-start;flex-wrap:wrap}.weekly-allocation .heading .btn{font-size:9px;padding:9px 10px}}
 .collapsible-card>summary:after{content:"+";font-family:"SFMono-Regular",Consolas,monospace;font-size:1.2rem;color:var(--cyan);flex:0 0 auto}
 .collapsible-card[open]>summary:after{content:"−"}
 .collapsible-card .collapse-body{padding:0 20px 20px}
@@ -359,6 +361,7 @@ body.standalone .add-fab{
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18"/></svg></span>
       <div><h3>Monthly remaining balance allocation</h3><div class="micro" style="margin-top:4px">PLANNED REMAINING BALANCE SPLIT ACROSS THIS PAY CYCLE'S WEEKS</div></div>
     </div>
+    <button class="btn danger" id="resetCurrentAllocation" type="button" title="Recalculate the current pay cycle allocation">Recalculate current cycle</button>
   </div>
   <div class="allocation-summary" id="allocationSummary"></div>
   <div class="allocation-weeks" id="allocationWeeks"></div>
@@ -372,9 +375,11 @@ body.standalone .add-fab{
         <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg></span>
         <div><h3>Budget vs actual</h3><div class="micro">PLANNED EXPENSE COVERAGE</div></div>
       </div>
-      <button class="btn budget-add-btn" id="addBudgetBtn" type="button">+ Add budget</button>
     </summary>
-    <div class="collapse-body"><div class="budget-list" id="budgetList"></div></div>
+    <div class="collapse-body">
+      <div class="budget-card-actions"><button class="btn primary" id="addBudgetBtn" type="button">+ Add budget</button></div>
+      <div class="budget-list" id="budgetList"></div>
+    </div>
   </details>
 </section>
 <details class="card collapsible-card" id="trendSection" style="margin-bottom:18px"><summary><div class="summary-main"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18V9m4 9V5m4 13v-6m4 6V7m4 11V3"/></svg></span><div><h3 id="trendTitle">Cashflow trend</h3><div class="micro" id="trendSubtitle">INCOME VS EXPENSES</div></div></div></summary><div class="collapse-body"><div id="trendChart"></div></div></details>
@@ -432,7 +437,7 @@ body.standalone .add-fab{
       <input id="customPaydayDay" type="number" min="1" max="28" step="1" value="25">
       <div class="small" style="margin-top:6px">Custom recurring days are limited to 1–28 so every month has the date.</div>
     </div>
-    <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button><button class="btn danger" id="resetCurrentAllocation" type="button">Recalculate current cycle</button></div>
+    <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button></div>
   </div>
 </div>
 
@@ -674,8 +679,8 @@ async function signUp(){
 }
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}stopCloudRefresh();currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
-const APP_VERSION='1.3.0';
-const BUILD_NUMBER='2026.08.26.27';
+const APP_VERSION='1.3.1';
+const BUILD_NUMBER='2026.08.27.1';
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:3,appVersion:'1.0.0',buildNumber:'2026.08.25.1',transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
@@ -1442,14 +1447,19 @@ document.querySelectorAll('[data-payday-mode]').forEach(btn=>btn.onclick=()=>{
 });
 
 $('resetCurrentAllocation').onclick=()=>{
-  const cycle=payCycleForDate(parse($('periodAnchor').value));
+  const anchor=parse($('periodAnchor').value);
+  const cycle=payCycleForDate(anchor);
+  const startLabel=cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+  const endLabel=cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+  const message=`Recalculate the current pay cycle (${startLabel} – ${endLabel})?\n\nThis removes the locked weekly allocation snapshot for this cycle and immediately rebuilds it using the current income and budgeted expense amounts.\n\nYour transactions and budget categories are not deleted. Any previous locked weekly allocation values for this cycle will be replaced.`;
+  if(!confirm(message))return;
+
   state.settings=state.settings||{};
   state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
   delete state.settings.allocationSnapshots[iso(cycle.start)];
   saveState();
   refreshPaydayUi();
   render();
-  closePaydayModal();
 };
 $('savePaydaySettings').onclick=()=>{
   if(pendingPaydayMode==='last'){
