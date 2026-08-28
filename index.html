@@ -278,6 +278,27 @@ body.standalone .add-fab{
 .conflict-panel h4{margin:0 0 6px;font-size:.95rem;font-weight:450;color:var(--amber)}
 .sync-note{font-size:.76rem;color:var(--muted);line-height:1.45;margin-top:9px}
 
+
+
+/* Full-screen report preview */
+.report-preview-modal{position:fixed;inset:0;z-index:220;display:none;background:var(--bg)}
+.report-preview-modal.open{display:flex}
+.report-preview-shell{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden}
+.report-preview-toolbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px max(16px,env(safe-area-inset-right)) 14px max(16px,env(safe-area-inset-left));padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);background:rgba(4,6,11,.90);backdrop-filter:blur(20px);box-shadow:0 12px 36px rgba(0,0,0,.18)}
+body.light .report-preview-toolbar{background:rgba(220,229,235,.94)}
+.report-preview-title{min-width:0}.report-preview-title h3{margin:0;font-size:1rem;font-weight:500}.report-preview-title .micro{margin-top:4px}
+.report-preview-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.report-preview-actions .btn{white-space:nowrap}
+.report-preview-body{flex:1 1 auto;min-height:0;background:var(--bg)}
+.report-preview-body iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
+.report-preview-status{flex:0 0 auto;min-height:0;margin:0;padding:0 16px;color:var(--muted);background:var(--bg);font-size:.76rem}
+.report-preview-status:not(:empty){padding-top:8px;padding-bottom:max(8px,env(safe-area-inset-bottom));border-top:1px solid var(--border)}
+@media(max-width:700px){
+  .report-preview-toolbar{align-items:flex-start;flex-direction:column;padding:12px 14px}
+  .report-preview-actions{width:100%;display:grid;grid-template-columns:1fr 1fr 42px}
+  .report-preview-actions .btn{width:100%}
+  .report-preview-actions .icon-btn{width:42px}
+}
 </style>
 </head>
 <body>
@@ -299,7 +320,7 @@ body.standalone .add-fab{
   <circle cx="51" cy="13" r="2.2" fill="#b786ff"/>
 </svg></div><div><h1>NEXUS BUDGET</h1><div class="subtitle">Local-first personal finance console.</div><div class="online micro"><span class="dot"></span><span id="localVaultText">LOCAL VAULT ONLINE</span><span style="opacity:.5">//</span><span class="cloud-control"><span class="cloud-status-dot" id="cloudStatusDot"></span><span id="cloudStatusText">CLOUD NOT CONFIGURED</span></span></div></div></div>
   <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-expanded="false" aria-controls="headerActions" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-  <div class="actions" id="headerActions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="cloudSyncBtn" type="button">Cloud Sync</button><button class="btn" id="exportBtn">Export JSON</button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">Download Report</button><button class="btn danger" id="resetBtn">Reset Data</button><button class="btn icon-btn" id="shareBtn" type="button" aria-label="Share backup" title="Share backup">
+  <div class="actions" id="headerActions"><div class="theme-control"><span id="themeLabel">Dark</span><button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light and dark theme"><span class="theme-switch-thumb"></span></button></div><button class="btn" id="cloudSyncBtn" type="button">Cloud Sync</button><button class="btn" id="exportBtn">Export JSON</button><button class="btn" id="importBtn">Import JSON</button><button class="btn" id="reportBtn">View Report</button><button class="btn danger" id="resetBtn">Reset Data</button><button class="btn icon-btn" id="shareBtn" type="button" aria-label="Share backup" title="Share backup">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
 <path d="M8.6 10.7 15.4 6.3M8.6 13.3l6.8 4.4"></path>
@@ -543,7 +564,28 @@ body.standalone .add-fab{
 </div>
 
 </div>
+
+<div class="report-preview-modal" id="reportPreviewModal" role="dialog" aria-modal="true" aria-labelledby="reportPreviewTitle">
+  <div class="report-preview-shell">
+    <div class="report-preview-toolbar">
+      <div class="report-preview-title">
+        <h3 id="reportPreviewTitle">Report preview</h3>
+        <div class="micro" id="reportPreviewSubtitle">REVIEW BEFORE DOWNLOADING</div>
+      </div>
+      <div class="report-preview-actions">
+        <button class="btn primary" id="downloadReportPdf" type="button">Download PDF</button>
+        <button class="btn" id="downloadReportHtml" type="button">Download HTML</button>
+        <button class="btn icon-btn" id="closeReportPreview" type="button" aria-label="Close report preview" title="Close report preview">×</button>
+      </div>
+    </div>
+    <div class="report-preview-body"><iframe id="reportPreviewFrame" title="Nexus Budget report preview"></iframe></div>
+    <div class="report-preview-status" id="reportPreviewStatus"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.12/build/pdfmake.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.12/build/vfs_fonts.js"></script>
 <script>
 
 const STANDALONE_MODE=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -679,8 +721,8 @@ async function signUp(){
 }
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}stopCloudRefresh();currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
-const APP_VERSION='1.3.1';
-const BUILD_NUMBER='2026.08.27.1';
+const APP_VERSION='1.3.2';
+const BUILD_NUMBER='2026.08.28.1';
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:3,appVersion:'1.0.0',buildNumber:'2026.08.25.1',transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
@@ -1540,7 +1582,7 @@ $('addBudgetBtn').onclick=e=>{
 };
 $('closeTxnModal').onclick=closeTxnModal;
 $('txnModal').addEventListener('click',e=>{if(e.target===$('txnModal'))closeTxnModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('txnModal').classList.contains('open'))closeTxnModal();if($('paydayModal').classList.contains('open'))closePaydayModal();if($('budgetEditModal').classList.contains('open'))closeBudgetEditModal()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('reportPreviewModal').classList.contains('open'))closeReportPreview();if($('txnModal').classList.contains('open'))closeTxnModal();if($('paydayModal').classList.contains('open'))closePaydayModal();if($('budgetEditModal').classList.contains('open'))closeBudgetEditModal()}});
 
 $('modalSaveBudget').onclick=()=>{
   const k=$('modalBudgetMonth').value,c=$('modalBudgetCategory').value.trim(),a=Number($('modalBudgetAmount').value);
@@ -1622,6 +1664,495 @@ $('txnSortDir').onclick=()=>{
 };
 
 $('exportCsv').onclick=()=>{const rows=period==='month'?getVisibleTransactions(rangeTransactions()):rangeTransactions();download(`nexus-budget-${period}-${iso(periodBounds().s)}.csv`,'\uFEFF'+csvRows(rows),'text/csv;charset=utf-8')};
+
+let currentReportHtml='';
+let currentReportFilename='nexus-budget-report';
+
+function openReportPreview(html,filename,title){
+  currentReportHtml=html;
+  currentReportFilename=filename||'nexus-budget-report';
+  $('reportPreviewTitle').textContent=title||'Report preview';
+  $('reportPreviewSubtitle').textContent=`${period.toUpperCase()} REPORT // REVIEW BEFORE DOWNLOADING`;
+  $('reportPreviewStatus').textContent='';
+  $('reportPreviewFrame').srcdoc=html;
+  $('reportPreviewModal').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeReportPreview(){
+  $('reportPreviewModal').classList.remove('open');
+  document.body.classList.remove('modal-open');
+  $('reportPreviewStatus').textContent='';
+}
+
+$('closeReportPreview').onclick=closeReportPreview;
+$('reportPreviewModal').addEventListener('click',e=>{if(e.target===$('reportPreviewModal'))closeReportPreview()});
+
+$('downloadReportHtml').onclick=()=>{
+  if(!currentReportHtml)return;
+  download(`${currentReportFilename}.html`,currentReportHtml,'text/html;charset=utf-8');
+};
+
+const PDF_THEME={
+  text:'#17202c',
+  muted:'#617082',
+  border:'#cfd8e1',
+  surface:'#ffffff',
+  page:'#f7fafc',
+  cyan:'#0b8f8d',
+  green:'#087f5b',
+  red:'#c33b46',
+  blue:'#4965d8',
+  track:'#e3e9ef',
+  callout:'#eef8f8'
+};
+
+function pdfMoney(value){return money(Number(value)||0)}
+
+function pdfMetricCard(label,value,detail=''){
+  return {
+    stack:[
+      {text:String(label||'').toUpperCase(),style:'metricLabel'},
+      {text:String(value??''),style:'metricValue'},
+      ...(detail?[{text:String(detail),style:'metricDetail'}]:[])
+    ],
+    margin:[0,0,0,0]
+  };
+}
+
+function pdfSectionTitle(title,subtitle=''){
+  const content=[{text:title,style:'sectionTitle'}];
+  if(subtitle)content.push({text:subtitle,style:'sectionSub'});
+  return {stack:content,margin:[0,0,0,10]};
+}
+
+function pdfProgressBar(label,value,max,color){
+  const safeMax=Math.max(Number(max)||0,1);
+  const pct=Math.max(0,Math.min((Number(value)||0)/safeMax,1));
+  const full=270;
+  const used=Math.max(2,full*pct);
+  return {
+    margin:[0,0,0,9],
+    columns:[
+      {width:74,text:label,style:'barLabel'},
+      {
+        width:full,
+        canvas:[
+          {type:'rect',x:0,y:3,w:full,h:7,r:3.5,color:PDF_THEME.track},
+          {type:'rect',x:0,y:3,w:used,h:7,r:3.5,color}
+        ]
+      },
+      {width:'*',text:pdfMoney(value),style:'barValue',alignment:'right'}
+    ],
+    columnGap:8
+  };
+}
+
+function pdfExpenseMix(expenseData){
+  if(!expenseData.length){
+    return [{text:'No expense data for this period.',style:'empty'}];
+  }
+  const total=expenseData.reduce((sum,row)=>sum+Number(row[1]||0),0);
+  const rows=expenseData.map(([name,val],i)=>{
+    const pct=total?Number(val)/total*100:0;
+    return [
+      {
+        columns:[
+          {width:8,canvas:[{type:'rect',x:0,y:3,w:7,h:7,color:color(i)}]},
+          {width:'*',text:String(name),style:'tableText'}
+        ],
+        columnGap:7
+      },
+      {text:pdfMoney(val),style:'tableText',alignment:'right'},
+      {text:`${pct.toFixed(0)}%`,style:'tableMuted',alignment:'right'}
+    ];
+  });
+  return [
+    {text:`Total expenses ${pdfMoney(total)}`,style:'mixTotal',margin:[0,0,0,9]},
+    {
+      table:{
+        widths:['*',78,42],
+        body:rows
+      },
+      layout:'noBorders'
+    }
+  ];
+}
+
+function pdfCashflowChart(trend){
+  if(!trend.length)return {text:'No cashflow data for this period.',style:'empty'};
+  const max=Math.max(1,...trend.flatMap(x=>[Number(x.income)||0,Number(x.expense)||0]));
+  const width=450;
+  const height=125;
+  const left=18;
+  const bottom=102;
+  const groupW=width/trend.length;
+  const barW=Math.min(15,Math.max(6,(groupW-10)/2));
+  const canvas=[
+    {type:'line',x1:left,y1:bottom,x2:width-4,y2:bottom,lineColor:PDF_THEME.border,lineWidth:1}
+  ];
+  trend.forEach((x,i)=>{
+    const cx=left+i*groupW+groupW/2;
+    const incomeH=Math.max(2,(Number(x.income)||0)/max*88);
+    const expenseH=Math.max(2,(Number(x.expense)||0)/max*88);
+    canvas.push(
+      {type:'rect',x:cx-barW-2,y:bottom-incomeH,w:barW,h:incomeH,color:PDF_THEME.green},
+      {type:'rect',x:cx+2,y:bottom-expenseH,w:barW,h:expenseH,color:PDF_THEME.red}
+    );
+  });
+  return {
+    stack:[
+      {canvas,margin:[0,0,0,3]},
+      {
+        columns:trend.map(x=>({text:String(x.label),fontSize:8,color:PDF_THEME.muted,alignment:'center'})),
+        margin:[18,0,4,0]
+      },
+      {
+        columns:[
+          {text:'● Income',fontSize:9,color:PDF_THEME.green},
+          {text:'● Expenses',fontSize:9,color:PDF_THEME.red}
+        ],
+        columnGap:16,
+        margin:[0,8,0,0]
+      }
+    ]
+  };
+}
+
+function pdfWeeklyAllocationChart(data){
+  const max=Math.max(1,...data.weeks.map(w=>Math.abs(Number(w.allowance)||0)));
+  const width=450;
+  const bottom=102;
+  const groupW=width/Math.max(data.weeks.length,1);
+  const barW=Math.min(24,Math.max(10,groupW-28));
+  const canvas=[
+    {type:'line',x1:18,y1:bottom,x2:width-4,y2:bottom,lineColor:PDF_THEME.border,lineWidth:1}
+  ];
+  data.weeks.forEach((w,i)=>{
+    const cx=18+i*groupW+groupW/2;
+    const h=Math.max(2,Math.abs(Number(w.allowance)||0)/max*88);
+    canvas.push({type:'rect',x:cx-barW/2,y:bottom-h,w:barW,h,color:PDF_THEME.cyan});
+  });
+  return {
+    stack:[
+      {canvas,margin:[0,0,0,3]},
+      {
+        columns:data.weeks.map(w=>({text:w.label,fontSize:8,color:PDF_THEME.muted,alignment:'center'})),
+        margin:[18,0,4,0]
+      }
+    ]
+  };
+}
+
+function pdfCardTable(items){
+  const rows=[];
+  for(let i=0;i<items.length;i+=2){
+    const a=items[i],b=items[i+1];
+    rows.push([
+      {stack:a.stack,margin:[12,11,12,11]},
+      b?{stack:b.stack,margin:[12,11,12,11]}:{text:''}
+    ]);
+  }
+  return {
+    table:{widths:['*','*'],body:rows},
+    layout:{
+      hLineColor:()=>PDF_THEME.border,
+      vLineColor:()=>PDF_THEME.border,
+      hLineWidth:()=>1,
+      vLineWidth:()=>1,
+      fillColor:()=>PDF_THEME.surface
+    },
+    margin:[0,0,0,16]
+  };
+}
+
+function buildPdfMakeDefinition(){
+  const generated=new Date().toLocaleString();
+  const title=$('periodLabel').textContent||'Nexus Budget';
+
+  const content=[
+    {
+      columns:[
+        {
+          width:36,
+          table:{widths:[32],heights:[32],body:[[{text:'N',alignment:'center',margin:[0,7,0,0],bold:true,color:PDF_THEME.cyan}]]},
+          layout:{
+            hLineColor:()=> '#9ccfd0',
+            vLineColor:()=> '#9ccfd0',
+            hLineWidth:()=>1,
+            vLineWidth:()=>1,
+            fillColor:()=> '#eaf6f6'
+          }
+        },
+        {
+          width:'*',
+          stack:[
+            {text:`NEXUS BUDGET 2060 // ${period.toUpperCase()} REPORT`,style:'eyebrow',margin:[8,3,0,0]}
+          ]
+        }
+      ],
+      margin:[0,0,0,14]
+    },
+    {
+      text:[
+        {text:title+' ',color:PDF_THEME.text},
+        {text:'Report',color:PDF_THEME.cyan}
+      ],
+      style:'reportTitle'
+    },
+    {text:`Generated locally ${generated}.`,style:'generated',margin:[0,5,0,16]}
+  ];
+
+  if(period==='week'){
+    const anchor=parse($('periodAnchor').value);
+    const data=weeklyLockedAllocation(anchor);
+    const activeIndex=Math.max(0,data.weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
+    const active=data.weeks[activeIndex];
+
+    content.push(
+      {
+        text:`Weekly allocation is based on the planned remaining balance for the current pay cycle. Unused balance carries forward only after a week closes.`,
+        style:'callout',
+        margin:[0,0,0,16]
+      },
+      pdfCardTable([
+        pdfMetricCard('Pay-cycle remaining',pdfMoney(data.baseRemaining)),
+        pdfMetricCard('Base weekly allocation',pdfMoney(data.baseShare)),
+        pdfMetricCard('Current week remaining',pdfMoney(active?.remaining||0)),
+        pdfMetricCard('Weeks',String(data.weeks.length))
+      ]),
+      {
+        stack:[
+          pdfSectionTitle('Weekly allocation trend','Locked allocation across the current pay cycle.'),
+          pdfWeeklyAllocationChart(data)
+        ],
+        style:'panel',
+        margin:[0,0,0,16]
+      },
+      {
+        stack:[
+          pdfSectionTitle('Pay-cycle allocation','Weekly allowance, spend, remaining balance and carry-forward.'),
+          {
+            table:{
+              headerRows:1,
+              widths:[32,74,64,62,62,62],
+              body:[
+                ['Week','Period','Allowance','Spent','Remaining','Carry forward'].map(x=>({text:x,style:'tableHeader'})),
+                ...data.weeks.map(w=>[
+                  {text:w.label,style:'tableText'},
+                  {text:`${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} – ${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}`,style:'tableText'},
+                  {text:pdfMoney(w.allowance),style:'tableText',alignment:'right'},
+                  {text:pdfMoney(w.spent),style:'tableText',alignment:'right'},
+                  {text:pdfMoney(w.remaining),style:'tableText',alignment:'right'},
+                  {text:pdfMoney(w.carryOut),style:'tableText',alignment:'right'}
+                ])
+              ]
+            },
+            layout:'lightHorizontalLines'
+          }
+        ],
+        style:'panel'
+      }
+    );
+  } else {
+    const actualTx=rangeTransactions();
+    const tx=period==='year'?annualizedMonthTransactions():actualTx;
+    const inc=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0);
+    const actualExp=tx.filter(x=>x.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
+    const bud=periodBudgetMap();
+    const planned=Object.values(bud).reduce((a,b)=>a+Number(b),0);
+    const displayExpense=period==='month'?planned:actualExp;
+    const plannedRemaining=inc-planned;
+    const actualRemaining=inc-actualExp;
+    const expenseData=reportExpenseData(tx);
+    const trend=reportTrendData(tx);
+
+    if(period==='month'){
+      content.push({
+        text:`Planned month: ${pdfMoney(inc)} income − ${pdfMoney(planned)} budgeted expenses = ${pdfMoney(plannedRemaining)} planned remaining. Actual expenses recorded: ${pdfMoney(actualExp)}, leaving ${pdfMoney(actualRemaining)} actual remaining.`,
+        style:'callout',
+        margin:[0,0,0,16]
+      });
+    }else{
+      content.push({
+        text:'Annual figures are projected from the selected month × 12, providing a high-level yearly account view.',
+        style:'callout',
+        margin:[0,0,0,16]
+      });
+    }
+
+    content.push(
+      pdfCardTable([
+        pdfMetricCard('Income',pdfMoney(inc)),
+        pdfMetricCard(period==='month'?'Budgeted expenses':'Expenses',pdfMoney(displayExpense),period==='month'?`Actual expenses ${pdfMoney(actualExp)}`:''),
+        pdfMetricCard(period==='month'?'Planned remaining':'Remaining balance',pdfMoney(period==='month'?plannedRemaining:actualRemaining),period==='month'?`Actual remaining ${pdfMoney(actualRemaining)}`:''),
+        pdfMetricCard(period==='month'?'Budget used':'Planned expenses',period==='month'?(planned?`${Math.round(actualExp/planned*100)}%`:'—'):pdfMoney(planned))
+      ])
+    );
+
+    const maxAccount=Math.max(inc,displayExpense,actualExp,Math.abs(inc-displayExpense),1);
+    content.push(
+      {
+        stack:[
+          pdfSectionTitle('Account overview','Income, budgeted expenses, actual expenses, and remaining balance.'),
+          pdfProgressBar('Income',inc,maxAccount,PDF_THEME.green),
+          pdfProgressBar('Budgeted',displayExpense,maxAccount,PDF_THEME.red),
+          pdfProgressBar('Actual',actualExp,maxAccount,PDF_THEME.red),
+          pdfProgressBar('Planned rem.',Math.abs(inc-displayExpense),maxAccount,PDF_THEME.cyan)
+        ],
+        style:'panel',
+        margin:[0,0,0,16]
+      },
+      {
+        stack:[
+          pdfSectionTitle('Expense mix','Share of expenses by category.'),
+          ...pdfExpenseMix(expenseData)
+        ],
+        style:'panel',
+        margin:[0,0,0,16]
+      },
+      {
+        stack:[
+          pdfSectionTitle('Cashflow trend','Income versus expenses across the report period.'),
+          pdfCashflowChart(trend)
+        ],
+        style:'panel',
+        margin:[0,0,0,16]
+      }
+    );
+
+    const cats=[...new Set([...Object.keys(bud),...tx.filter(x=>x.type==='expense').map(x=>x.category)])];
+    const budgetBody=[
+      ['Category','Planned','Actual','Remaining plan'].map(x=>({text:x,style:'tableHeader'})),
+      ...cats.map(c=>{
+        const actual=tx.filter(x=>x.type==='expense'&&x.category===c).reduce((sum,x)=>sum+Number(x.amount),0);
+        return [
+          {text:String(c),style:'tableText'},
+          {text:pdfMoney(bud[c]||0),style:'tableText',alignment:'right'},
+          {text:pdfMoney(actual),style:'tableText',alignment:'right'},
+          {text:pdfMoney(Number(bud[c]||0)-actual),style:'tableText',alignment:'right'}
+        ];
+      })
+    ];
+    if(budgetBody.length===1){
+      budgetBody.push([{text:'No category data for this period.',colSpan:4,style:'empty'}, {}, {}, {}]);
+    }
+
+    content.push({
+      stack:[
+        pdfSectionTitle(period==='year'?'Annual expense accounts':'Budget vs actual',period==='year'?'High-level annualized expense account totals by category.':'Planned versus actual expense totals by category.'),
+        {
+          table:{headerRows:1,widths:['*',78,78,86],body:budgetBody},
+          layout:'lightHorizontalLines'
+        }
+      ],
+      style:'panel',
+      margin:[0,0,0,period==='year'?0:16]
+    });
+
+    if(period!=='year'){
+      const transactionBody=[
+        ['Date','Type','Category','Note','Amount','Status'].map(x=>({text:x,style:'tableHeader'})),
+        ...actualTx.map(t=>[
+          {text:t.date,style:'tableText'},
+          {text:t.type,style:'tableText'},
+          {text:t.category,style:'tableText'},
+          {text:t.note||'',style:'tableText'},
+          {text:pdfMoney(t.amount),style:'tableText',alignment:'right'},
+          {text:t.type==='income'?'Received':(t.paid?'Paid':'Unpaid'),style:'tableText'}
+        ])
+      ];
+      if(transactionBody.length===1){
+        transactionBody.push([{text:'No transactions for this period.',colSpan:6,style:'empty'}, {}, {}, {}, {}, {}]);
+      }
+
+      content.push({
+        stack:[
+          pdfSectionTitle('Transactions',`Transactions recorded in the selected ${period}.`),
+          {
+            table:{
+              headerRows:1,
+              widths:[55,45,72,'*',62,50],
+              body:transactionBody,
+              dontBreakRows:false
+            },
+            layout:'lightHorizontalLines'
+          }
+        ],
+        style:'panel'
+      });
+    }
+  }
+
+  return {
+    pageSize:'A4',
+    pageMargins:[34,36,34,40],
+    background:()=>({
+      canvas:[{type:'rect',x:0,y:0,w:595.28,h:841.89,color:PDF_THEME.page}]
+    }),
+    footer:(currentPage,pageCount)=>({
+      margin:[34,8,34,0],
+      columns:[
+        {text:'NEXUS BUDGET // PDF REPORT',fontSize:8,color:PDF_THEME.muted},
+        {text:`${currentPage} / ${pageCount}`,fontSize:8,color:PDF_THEME.muted,alignment:'right'}
+      ]
+    }),
+    defaultStyle:{
+      font:'Roboto',
+      fontSize:10,
+      color:PDF_THEME.text
+    },
+    styles:{
+      eyebrow:{fontSize:8,bold:true,characterSpacing:1.2,color:PDF_THEME.muted},
+      reportTitle:{fontSize:30,bold:false,lineHeight:1.05,color:PDF_THEME.text},
+      generated:{fontSize:9,color:PDF_THEME.muted},
+      callout:{fontSize:9.5,color:'#425161',fillColor:PDF_THEME.callout,margin:[12,10,12,10]},
+      metricLabel:{fontSize:8,bold:true,characterSpacing:1,color:PDF_THEME.muted},
+      metricValue:{fontSize:21,color:PDF_THEME.text,margin:[0,5,0,0]},
+      metricDetail:{fontSize:9,color:PDF_THEME.muted,margin:[0,5,0,0]},
+      sectionTitle:{fontSize:14,bold:true,color:PDF_THEME.text},
+      sectionSub:{fontSize:9,color:PDF_THEME.muted,margin:[0,3,0,0]},
+      panel:{fillColor:PDF_THEME.surface,margin:[12,12,12,12]},
+      barLabel:{fontSize:9,color:PDF_THEME.text},
+      barValue:{fontSize:9,bold:true,color:PDF_THEME.text},
+      mixTotal:{fontSize:15,color:PDF_THEME.text},
+      tableHeader:{fontSize:8,bold:true,color:PDF_THEME.muted,fillColor:'#edf2f5',margin:[0,4,0,4]},
+      tableText:{fontSize:8.5,color:PDF_THEME.text,margin:[0,3,0,3]},
+      tableMuted:{fontSize:8.5,color:PDF_THEME.muted,margin:[0,3,0,3]},
+      empty:{fontSize:9,color:PDF_THEME.muted,italics:true}
+    },
+    content
+  };
+}
+
+$('downloadReportPdf').onclick=()=>{
+  if(!currentReportHtml)return;
+  const status=$('reportPreviewStatus');
+  const button=$('downloadReportPdf');
+  const previous=button.textContent;
+
+  button.disabled=true;
+  button.textContent='Preparing PDF...';
+  status.textContent='Generating a print-safe Nexus PDF...';
+
+  try{
+    if(!window.pdfMake||typeof window.pdfMake.createPdf!=='function'){
+      throw new Error('PDF generator is unavailable.');
+    }
+    const docDefinition=buildPdfMakeDefinition();
+    window.pdfMake.createPdf(docDefinition).download(`${currentReportFilename}.pdf`,()=>{
+      status.textContent='PDF downloaded.';
+      button.disabled=false;
+      button.textContent=previous;
+    });
+  }catch(error){
+    console.error('Nexus PDF report generation failed:',error);
+    status.textContent='PDF generation failed. You can still download the HTML report.';
+    button.disabled=false;
+    button.textContent=previous;
+  }
+};
+
 function reportExpenseData(tx){const map={};tx.filter(t=>t.type==='expense').forEach(t=>map[t.category]=(map[t.category]||0)+Number(t.amount));return Object.entries(map).sort((a,b)=>b[1]-a[1])}
 function reportTrendData(tx){
   const bs=buckets();
@@ -1741,6 +2272,47 @@ body.light{
     radial-gradient(circle at 92% 0%,rgba(11,143,141,.06),transparent 30rem),
     var(--bg);
 }
+
+body.pdf-export{
+  --bg:#eef3f6;
+  --surface:#f8fbfc;
+  --surface2:#edf3f6;
+  --border:rgba(35,49,66,.16);
+  --text:#17202c;
+  --muted:#5e6b7b;
+  --cyan:#0b8f8d;
+  --green:#087f5b;
+  --red:#c33b46;
+  --blue:#4965d8;
+  --shadow:0 8px 24px rgba(31,45,61,.09);
+  background:linear-gradient(180deg,#f3f7f9 0%,#e7eef3 100%);
+  color:var(--text);
+}
+body.pdf-export .report-shell .card,
+body.pdf-export .report-shell .panel{
+  background:linear-gradient(135deg,#fbfdfe,#edf3f7);
+  border-color:var(--border);
+  box-shadow:var(--shadow);
+  color:var(--text);
+}
+body.pdf-export .report-head .mark{
+  color:var(--cyan);
+  background:rgba(11,143,141,.07);
+  border-color:rgba(11,143,141,.24);
+}
+body.pdf-export .report-shell th{
+  background:#e3ebf0;
+  color:var(--muted);
+}
+body.pdf-export .report-shell td{color:var(--text)}
+body.pdf-export .report-shell .table-scroll{background:rgba(255,255,255,.42)}
+body.pdf-export .report-shell .htrack{background:rgba(35,49,66,.10)}
+body.pdf-export .report-shell .trend-bars{border-bottom-color:rgba(35,49,66,.18)}
+body.pdf-export .report-shell .donut span{
+  background:#edf3f6;
+  color:var(--text);
+}
+
 .report-shell{width:min(1120px,calc(100% - 32px));margin:0 auto;padding:28px 0 60px}
 .report-head{margin-bottom:0}
 .report-head .brandline{display:flex;align-items:center;gap:10px}
@@ -1877,7 +2449,6 @@ $('reportBtn').onclick=()=>{
       const allocationHtml=weeklyAllocationReportHtml();
       const trendHtml=weeklyAllocationTrendReportHtml();
       const detailsHtml=typeof weeklyDetailReportHtml==='function'?weeklyDetailReportHtml():'';
-
       const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus Weekly Remaining Balance Report</title><style>'
         +reportCss
         +'</style></head><body class="'+bodyClass+'"><main class="report-shell">'
@@ -1886,8 +2457,7 @@ $('reportBtn').onclick=()=>{
         +'<p class="sub">Generated locally '+esc(generated)+'. The weekly report focuses on the current pay-cycle allocation and weekly remaining balance.</p></header>'
         +allocationHtml+trendHtml+detailsHtml
         +'</main></body></html>';
-
-      download('nexus-budget-report-week-'+iso(s)+'.html',html,'text/html;charset=utf-8');
+      openReportPreview(html,'nexus-budget-report-week-'+iso(s),$('periodLabel').textContent+' Report');
       return;
     }
 
@@ -1937,7 +2507,7 @@ $('reportBtn').onclick=()=>{
       +(period==='year'?'':'<section class="panel"><h2>Transactions</h2><p class="sub">Transactions recorded in the selected '+period+'.</p><div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+(detailRows||'<tr><td colspan="6">No transactions for this period.</td></tr>')+'</tbody></table></div></section>')
       +'</main></body></html>';
 
-    download('nexus-budget-report-'+period+'-'+iso(s)+'.html',html,'text/html;charset=utf-8');
+    openReportPreview(html,'nexus-budget-report-'+period+'-'+iso(s),$('periodLabel').textContent+' Report');
   }catch(error){
     console.error('Nexus report generation failed:',error);
     alert('The report could not be generated: '+(error&&error.message?error.message:'Unknown error'));
