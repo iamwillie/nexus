@@ -380,7 +380,7 @@ body.light .report-preview-toolbar{background:rgba(220,229,235,.94)}
   <div class="heading">
     <div class="heading-left">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18"/></svg></span>
-      <div><h3>Monthly remaining balance allocation</h3><div class="micro" style="margin-top:4px">PLANNED REMAINING BALANCE SPLIT ACROSS THIS PAY CYCLE'S WEEKS</div></div>
+      <div><h3>Monthly remaining balance allocation</h3><div class="micro" style="margin-top:4px">PAY-CYCLE INCOME SPLIT ACROSS WEEKS // ACTUAL EXPENSES TRACKED BY WEEK</div></div>
     </div>
     <button class="btn danger" id="resetCurrentAllocation" type="button" title="Recalculate the current pay cycle allocation">Recalculate current cycle</button>
   </div>
@@ -721,8 +721,8 @@ async function signUp(){
 }
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}stopCloudRefresh();currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
-const APP_VERSION='1.3.2';
-const BUILD_NUMBER='2026.08.28.1';
+const APP_VERSION='1.3.3';
+const BUILD_NUMBER='2026.08.31.1';
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:3,appVersion:'1.0.0',buildNumber:'2026.08.25.1',transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
@@ -923,6 +923,8 @@ function setPeriodLabel(){const{s,e}=periodBounds();const opt={day:'2-digit',mon
 function monthTransactionsForDate(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0);return state.transactions.filter(t=>{const x=parse(t.date);return x>=s&&x<=e})}
 function monthWeekBuckets(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0),arr=[];for(let cur=new Date(s),idx=1;cur<=e;idx++){const bs=new Date(cur),be=new Date(cur);be.setDate(Math.min(cur.getDate()+6,e.getDate()));arr.push({label:`W${idx}`,s:bs,e:be});cur=new Date(be);cur.setDate(cur.getDate()+1)}return arr}
 
+const WEEK_ALLOCATION_BASIS='actual-expenses-v1';
+
 function weeklyLockedAllocation(date){
   const cycle=payCycleForDate(date),
     tx=payCycleTransactions(date),
@@ -933,40 +935,47 @@ function weeklyLockedAllocation(date){
   state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
 
   let snapshot=state.settings.allocationSnapshots[key];
-  if(!snapshot){
-    const income=tx.filter(x=>x.type==='income').reduce((a,b)=>a+Number(b.amount),0);
-    const budgetMap=state.budgets[monthKey(cycle.start)]||{};
-    const budgetedExpenses=Object.values(budgetMap).reduce((a,b)=>a+Number(b),0);
-    const baseRemaining=income-budgetedExpenses;
+
+  // Rebuild legacy snapshots once so Week no longer uses monthly budget limits.
+  if(!snapshot||snapshot.basis!==WEEK_ALLOCATION_BASIS){
+    const income=tx
+      .filter(x=>x.type==='income')
+      .reduce((a,b)=>a+Number(b.amount),0);
+
     snapshot={
       cycleStart:key,
       cycleEnd:iso(cycle.end),
-      allocationTotal:baseRemaining,
-      baseShare:weeks.length?baseRemaining/weeks.length:0,
+      basis:WEEK_ALLOCATION_BASIS,
+      allocationTotal:income,
+      baseShare:weeks.length?income/weeks.length:0,
       createdAt:Date.now()
     };
+
     state.settings.allocationSnapshots[key]=snapshot;
     saveState();
   }
 
-  const snapshotCreatedAt=Number(snapshot.createdAt)||0;
+  // Actual expense transactions are locked to the week of their transaction date.
+  // Budgeted category limits are deliberately not used in Week.
   const weeklySpent=weeks.map(w=>{
     const items=tx.filter(t=>{
       const d=parse(t.date);
-      const created=Number(t.createdAt)||0;
-      return d>=w.s&&d<=w.e&&created>snapshotCreatedAt&&t.type==='expense';
+      return d>=w.s&&d<=w.e&&t.type==='expense';
     });
     return items.reduce((a,b)=>a+Number(b.amount),0);
   });
 
+  const actualExpenseTotal=weeklySpent.reduce((a,b)=>a+b,0);
   const result=[];
   let carry=0;
+
   weeks.forEach((w,i)=>{
     const baseAllocation=Number(snapshot.baseShare)||0;
     const allowance=baseAllocation+carry;
     const spent=weeklySpent[i]||0;
     const remaining=allowance-spent;
     const carryOut=Math.max(remaining,0);
+
     result.push({
       ...w,
       index:i,
@@ -977,10 +986,11 @@ function weeklyLockedAllocation(date){
       remaining,
       carryOut,
       overspent:Math.min(remaining,0),
-      closed:cycle.end>=w.e
+      closed:w.e<new Date()
     });
+
     // Forward carry is applied only after the week has ended.
-    if(w.e<new Date()) carry=carryOut;
+    if(w.e<new Date())carry=carryOut;
     else carry=0;
   });
 
@@ -990,7 +1000,9 @@ function weeklyLockedAllocation(date){
     baseRemaining:Number(snapshot.allocationTotal)||0,
     allocationTotal:Number(snapshot.allocationTotal)||0,
     baseShare:Number(snapshot.baseShare)||0,
-    snapshotCreatedAt
+    actualExpenseTotal,
+    snapshotCreatedAt:Number(snapshot.createdAt)||0,
+    basis:snapshot.basis
   };
 }
 
@@ -1004,9 +1016,9 @@ function renderWeeklyAllocation(){
   const anchor=parse($('periodAnchor').value),data=weeklyLockedAllocation(anchor);
   const activeIndex=Math.max(0,data.weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
   summary.innerHTML=
-    `<div class="allocation-stat"><div class="micro">Pay-cycle allocated balance</div><div class="v" style="color:var(--cyan)">${money(data.baseRemaining)}</div><div class="small" style="margin-top:5px">${data.cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} → ${data.cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div></div>
-     <div class="allocation-stat"><div class="micro">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div><div class="small" style="margin-top:5px">Unused money carries forward only</div></div>
-     <div class="allocation-stat"><div class="micro">Current week remaining</div><div class="v" style="color:${data.weeks[activeIndex]&&data.weeks[activeIndex].remaining<0?'var(--red)':'var(--blue)'}">${money(data.weeks[activeIndex]?.remaining||0)}</div></div>`;
+    `<div class="allocation-stat"><div class="micro">Pay-cycle income allocation</div><div class="v" style="color:var(--cyan)">${money(data.allocationTotal)}</div><div class="small" style="margin-top:5px">Actual expenses tracked: ${money(data.actualExpenseTotal)}</div></div>
+     <div class="allocation-stat"><div class="micro">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div><div class="small" style="margin-top:5px">Income split across ${data.weeks.length} pay-cycle weeks</div></div>
+     <div class="allocation-stat"><div class="micro">Current week remaining</div><div class="v" style="color:${data.weeks[activeIndex]&&data.weeks[activeIndex].remaining<0?'var(--red)':'var(--blue)'}">${money(data.weeks[activeIndex]?.remaining||0)}</div><div class="small" style="margin-top:5px">Actual spending reduces this week's allowance</div></div>`;
   weeksEl.innerHTML=data.weeks.map(w=>{
     const active=w.index===activeIndex;
     const status=w.overspent<0?`Overspent ${money(Math.abs(w.overspent))}`:w.carryOut>0?`Carries ${money(w.carryOut)} forward`:'Fully used';
@@ -1014,7 +1026,7 @@ function renderWeeklyAllocation(){
       <div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div>
       <div class="amt">${money(w.allowance)}</div>
       <div class="small" style="margin-top:4px">${w.carryIn>0?`Includes ${money(w.carryIn)} carry-over`:'Locked base allocation'}</div>
-      <div class="spent">Spent ${money(w.spent)}</div>
+      <div class="spent">Actual spent ${money(w.spent)}</div>
       <div class="remaining">${money(w.remaining)} remaining</div>
       <div class="carry">${status}</div>
       <div class="small" style="margin-top:5px">${active?'Current weekly allowance':'Locked weekly allocation'}</div>
@@ -1493,7 +1505,7 @@ $('resetCurrentAllocation').onclick=()=>{
   const cycle=payCycleForDate(anchor);
   const startLabel=cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
   const endLabel=cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-  const message=`Recalculate the current pay cycle (${startLabel} – ${endLabel})?\n\nThis removes the locked weekly allocation snapshot for this cycle and immediately rebuilds it using the current income and budgeted expense amounts.\n\nYour transactions and budget categories are not deleted. Any previous locked weekly allocation values for this cycle will be replaced.`;
+  const message=`Recalculate the current pay cycle (${startLabel} – ${endLabel})?\n\nThis removes the locked weekly allocation snapshot and rebuilds the weekly allowances from the current pay-cycle income. Actual expense transactions are then applied to the week of their transaction date. Budgeted amounts are not used in Week.\n\nYour transactions and budget categories are not deleted. Any previous locked weekly allocation values for this cycle will be replaced.`;
   if(!confirm(message))return;
 
   state.settings=state.settings||{};
@@ -1911,19 +1923,19 @@ function buildPdfMakeDefinition(){
 
     content.push(
       {
-        text:`Weekly allocation is based on the planned remaining balance for the current pay cycle. Unused balance carries forward only after a week closes.`,
+        text:`Weekly allocation is based on pay-cycle income. Actual expense transactions reduce the allowance for the week in which they occur; budgeted amounts are not used. Unused balance carries forward only after a week closes.`,
         style:'callout',
         margin:[0,0,0,16]
       },
       pdfCardTable([
-        pdfMetricCard('Pay-cycle remaining',pdfMoney(data.baseRemaining)),
+        pdfMetricCard('Pay-cycle income allocation',pdfMoney(data.allocationTotal)),
+        pdfMetricCard('Actual expenses',pdfMoney(data.actualExpenseTotal)),
         pdfMetricCard('Base weekly allocation',pdfMoney(data.baseShare)),
-        pdfMetricCard('Current week remaining',pdfMoney(active?.remaining||0)),
-        pdfMetricCard('Weeks',String(data.weeks.length))
+        pdfMetricCard('Current week remaining',pdfMoney(active?.remaining||0))
       ]),
       {
         stack:[
-          pdfSectionTitle('Weekly allocation trend','Locked allocation across the current pay cycle.'),
+          pdfSectionTitle('Weekly allocation trend','Locked income allocation across the current pay cycle; actual expenses are tracked by week.'),
           pdfWeeklyAllocationChart(data)
         ],
         style:'panel',
@@ -1931,7 +1943,7 @@ function buildPdfMakeDefinition(){
       },
       {
         stack:[
-          pdfSectionTitle('Pay-cycle allocation','Weekly allowance, spend, remaining balance and carry-forward.'),
+          pdfSectionTitle('Pay-cycle allocation','Weekly allowance, actual spend, remaining balance and carry-forward.'),
           {
             table:{
               headerRows:1,
@@ -2179,10 +2191,10 @@ function weeklyAllocationTrendReportHtml(){
   if(period!=='week')return'';
   const anchor=parse($('periodAnchor').value),data=weeklyLockedAllocation(anchor);
   const max=Math.max(1,...data.weeks.map(w=>Math.abs(w.allowance)));
-  return `<section class="panel"><h2>Weekly allocation trend</h2><p class="sub">Each week starts with its locked allocation. Expenses reduce only that week; unused money carries forward at the end of the week.</p><div class="trend-report">${data.weeks.map(w=>{
+  return `<section class="panel"><h2>Weekly allocation trend</h2><p class="sub">Each week starts with its locked income allocation. Actual expenses reduce only the week in which they are recorded; unused money carries forward after the week closes.</p><div class="trend-report">${data.weeks.map(w=>{
     const active=anchor>=w.s&&anchor<=w.e;
     return `<div class="trend-item"><div class="trend-bars"><i class="balance" style="height:${Math.max(Math.abs(w.allowance)/max*100,1)}%;${active?'filter:brightness(1.25);':''}"></i></div><span>${esc(w.label)}</span></div>`;
-  }).join('')}</div><div class="chart-key"><span><i style="background:var(--cyan)"></i>Locked allocation</span><span>${money(data.baseRemaining)} cycle remaining</span></div></section>`;
+  }).join('')}</div><div class="chart-key"><span><i style="background:var(--cyan)"></i>Locked allocation</span><span>${money(data.actualExpenseTotal)} actual expenses tracked</span></div></section>`;
 }
 
 function weeklyAllocationReportHtml(){
@@ -2191,12 +2203,12 @@ function weeklyAllocationReportHtml(){
   const activeIndex=Math.max(0,data.weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
   const cycleStart=data.cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
   const cycleEnd=data.cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-  return `<section class="panel"><h2>Pay-cycle allocation</h2><p class="sub">${cycleStart} → ${cycleEnd}. Weekly allowances are based on the planned remaining balance after budgeted expenses.</p>
+  return `<section class="panel"><h2>Pay-cycle allocation</h2><p class="sub">${cycleStart} → ${cycleEnd}. Weekly allowances are based on pay-cycle income and reduced by actual expense transactions recorded in each week. Budgeted amounts are not used.</p>
     <div class="metrics">
-      <div class="card"><div class="metric-label">Pay-cycle remaining</div><div class="v">${money(data.baseRemaining)}</div></div>
+      <div class="card"><div class="metric-label">Pay-cycle income allocation</div><div class="v">${money(data.allocationTotal)}</div></div>
+      <div class="card"><div class="metric-label">Actual expenses</div><div class="v">${money(data.actualExpenseTotal)}</div></div>
       <div class="card"><div class="metric-label">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div></div>
       <div class="card"><div class="metric-label">Current week remaining</div><div class="v">${money(data.weeks[activeIndex]?.remaining||0)}</div></div>
-      <div class="card"><div class="metric-label">Weeks</div><div class="v">${data.weeks.length}</div></div>
     </div>
     <div class="table-scroll"><table><thead><tr><th>Week</th><th>Period</th><th>Allowance</th><th>Spent</th><th>Remaining</th><th>Carry forward</th></tr></thead><tbody>
       ${data.weeks.map(w=>`<tr${w.index===activeIndex?' style="font-weight:600"':''}><td>${esc(w.label)}</td><td>${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} – ${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</td><td>${money(w.allowance)}</td><td>${money(w.spent)}</td><td>${money(w.remaining)}</td><td>${money(w.carryOut)}</td></tr>`).join('')}
