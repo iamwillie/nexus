@@ -260,6 +260,35 @@ body.standalone .add-fab{
   .payday-options{grid-template-columns:1fr}
 }
 
+#recalcAllocationModal .modal-card{width:min(620px,100%)}
+.recalc-copy{color:var(--muted);font-size:.84rem;line-height:1.55;margin:0 0 14px}
+.recalc-balance{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);
+  border-radius:13px;background:rgba(255,255,255,.025)
+}
+.recalc-balance strong{font-size:1.05rem;color:var(--cyan);font-weight:500}
+.recalc-week-list{display:grid;gap:9px;margin-top:10px}
+.recalc-week-option{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center;
+  padding:11px 12px;border:1px solid var(--border);border-radius:12px;
+  background:rgba(255,255,255,.025);cursor:pointer
+}
+.recalc-week-option:hover{border-color:rgba(86,245,228,.26);background:rgba(86,245,228,.035)}
+.recalc-week-option input{width:17px;height:17px;accent-color:var(--red);cursor:pointer}
+.recalc-week-option strong{display:block;font-size:.83rem;font-weight:500;color:var(--text)}
+.recalc-week-option small{display:block;margin-top:3px;color:var(--muted);font-size:.72rem}
+.recalc-week-option.excluded{border-color:rgba(255,107,122,.28);background:rgba(255,107,122,.045)}
+.recalc-summary{margin-top:12px;color:var(--muted);font-size:.78rem;line-height:1.5}
+.recalc-summary strong{color:var(--cyan);font-weight:500}
+.allocation-week.excluded{
+  opacity:.62;border-style:dashed;background:rgba(255,255,255,.012);box-shadow:none
+}
+.allocation-week.excluded .amt,
+.allocation-week.excluded .remaining{color:var(--muted)}
+.allocation-week.excluded .spent{color:var(--muted)}
+.allocation-week.excluded .carry{color:var(--muted)}
+
 
 .cloud-control{display:inline-flex;align-items:center;gap:8px}
 .cloud-status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);box-shadow:0 0 8px rgba(125,137,156,.18);flex:0 0 auto}
@@ -459,6 +488,42 @@ body.light .report-preview-toolbar{background:rgba(220,229,235,.94)}
       <div class="small" style="margin-top:6px">Custom recurring days are limited to 1–28 so every month has the date.</div>
     </div>
     <div class="form-actions" style="margin-top:16px"><button class="btn primary" id="savePaydaySettings" type="button">Save pay cycle</button></div>
+  </div>
+</div>
+
+<div class="modal" id="recalcAllocationModal" role="dialog" aria-modal="true" aria-labelledby="recalcAllocationTitle">
+  <div class="card modal-card">
+    <div class="heading">
+      <div class="heading-left">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v18"/></svg></span>
+        <div>
+          <h3 id="recalcAllocationTitle">Recalculate current cycle</h3>
+          <div class="micro" style="margin-top:4px">ACTUAL REMAINING ALLOCATION</div>
+        </div>
+      </div>
+      <button class="btn modal-close" id="closeRecalcAllocationModal" type="button" aria-label="Close allocation recalculation">×</button>
+    </div>
+
+    <p class="recalc-copy" id="recalcAllocationCopy"></p>
+
+    <div class="recalc-balance">
+      <div>
+        <div class="micro">Actual remaining to allocate</div>
+        <div class="small" id="recalcAllocationEquation" style="margin-top:4px"></div>
+      </div>
+      <strong id="recalcAllocationBalance">0.00</strong>
+    </div>
+
+    <div class="micro">Exclude weeks from this allocation</div>
+    <div class="small" style="margin-top:5px">Checked weeks receive no weekly allocation and are ignored by weekly spend tracking until you recalculate again.</div>
+    <div class="recalc-week-list" id="recalcWeekList"></div>
+    <div class="recalc-summary" id="recalcAllocationSummary"></div>
+    <div class="status" id="recalcAllocationStatus"></div>
+
+    <div class="form-actions" style="margin-top:14px">
+      <button class="btn danger" id="confirmRecalcAllocation" type="button">Recalculate cycle</button>
+      <button class="btn" id="cancelRecalcAllocation" type="button">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -923,7 +988,7 @@ function setPeriodLabel(){const{s,e}=periodBounds();const opt={day:'2-digit',mon
 function monthTransactionsForDate(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0);return state.transactions.filter(t=>{const x=parse(t.date);return x>=s&&x<=e})}
 function monthWeekBuckets(d){const s=new Date(d.getFullYear(),d.getMonth(),1),e=new Date(d.getFullYear(),d.getMonth()+1,0),arr=[];for(let cur=new Date(s),idx=1;cur<=e;idx++){const bs=new Date(cur),be=new Date(cur);be.setDate(Math.min(cur.getDate()+6,e.getDate()));arr.push({label:`W${idx}`,s:bs,e:be});cur=new Date(be);cur.setDate(cur.getDate()+1)}return arr}
 
-const WEEK_ALLOCATION_BASIS='actual-remaining-v2';
+const WEEK_ALLOCATION_BASIS='actual-remaining-v3';
 
 function monthlyActualBalanceForDate(date){
   const tx=monthTransactionsForDate(date);
@@ -941,6 +1006,43 @@ function monthlyActualBalanceForDate(date){
   };
 }
 
+function createWeeklyAllocationSnapshot(date,excludedWeekIndexes=[]){
+  const cycle=payCycleForDate(date),
+    weeks=payCycleWeekBuckets(date),
+    key=iso(cycle.start),
+    monthActual=monthlyActualBalanceForDate(date);
+
+  const excluded=[...new Set(
+    (excludedWeekIndexes||[])
+      .map(Number)
+      .filter(i=>Number.isInteger(i)&&i>=0&&i<weeks.length)
+  )].sort((a,b)=>a-b);
+
+  // Never allow every week to be excluded.
+  if(excluded.length>=weeks.length)excluded.splice(weeks.length-1,1);
+
+  const includedCount=Math.max(1,weeks.length-excluded.length);
+  const allocationTotal=monthActual.actualRemaining;
+
+  const snapshot={
+    cycleStart:key,
+    cycleEnd:iso(cycle.end),
+    basis:WEEK_ALLOCATION_BASIS,
+    allocationTotal,
+    baseShare:allocationTotal/includedCount,
+    includedWeekCount:includedCount,
+    excludedWeekIndexes:excluded,
+    baselineIncome:monthActual.income,
+    baselineActualExpenses:monthActual.actualExpenses,
+    createdAt:Date.now()
+  };
+
+  state.settings=state.settings||{};
+  state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
+  state.settings.allocationSnapshots[key]=snapshot;
+  return snapshot;
+}
+
 function weeklyLockedAllocation(date){
   const cycle=payCycleForDate(date),
     cycleTx=payCycleTransactions(date),
@@ -953,32 +1055,19 @@ function weeklyLockedAllocation(date){
 
   let snapshot=state.settings.allocationSnapshots[key];
 
-  // The Week allocation pool is the same "Actual remaining" concept shown in
-  // Month: income minus actual expenses. Existing actual expenses are already
-  // included in that balance and therefore must not be deducted a second time.
+  // Rebuild legacy snapshots once using the Actual remaining model.
   if(!snapshot||snapshot.basis!==WEEK_ALLOCATION_BASIS){
-    const allocationTotal=monthActual.actualRemaining;
-
-    snapshot={
-      cycleStart:key,
-      cycleEnd:iso(cycle.end),
-      basis:WEEK_ALLOCATION_BASIS,
-      allocationTotal,
-      baseShare:weeks.length?allocationTotal/weeks.length:0,
-      baselineIncome:monthActual.income,
-      baselineActualExpenses:monthActual.actualExpenses,
-      createdAt:Date.now()
-    };
-
-    state.settings.allocationSnapshots[key]=snapshot;
+    snapshot=createWeeklyAllocationSnapshot(date,[]);
     saveState();
   }
 
-  // Only expenses added after the snapshot/recalculation reduce weekly
-  // allowances. Expenses already present at snapshot time are already included
-  // in allocationTotal through income - actual expenses.
+  const excludedSet=new Set((snapshot.excludedWeekIndexes||[]).map(Number));
   const snapshotCreatedAt=Number(snapshot.createdAt)||0;
-  const weeklySpent=weeks.map(w=>{
+
+  // Existing expenses are already included in the Actual remaining snapshot.
+  // Only new expenses reduce included weeks after the snapshot is created.
+  const weeklySpent=weeks.map((w,i)=>{
+    if(excludedSet.has(i))return 0;
     const items=cycleTx.filter(t=>{
       const d=parse(t.date);
       const created=Number(t.createdAt)||0;
@@ -992,6 +1081,26 @@ function weeklyLockedAllocation(date){
   let carry=0;
 
   weeks.forEach((w,i)=>{
+    const excluded=excludedSet.has(i);
+
+    if(excluded){
+      result.push({
+        ...w,
+        index:i,
+        excluded:true,
+        baseAllocation:0,
+        carryIn:0,
+        allowance:0,
+        spent:0,
+        remaining:0,
+        carryOut:carry,
+        overspent:0,
+        closed:w.e<new Date()
+      });
+      // Preserve carry across an excluded week so it reaches the next included week.
+      return;
+    }
+
     const baseAllocation=Number(snapshot.baseShare)||0;
     const allowance=baseAllocation+carry;
     const spent=weeklySpent[i]||0;
@@ -1001,6 +1110,7 @@ function weeklyLockedAllocation(date){
     result.push({
       ...w,
       index:i,
+      excluded:false,
       baseAllocation,
       carryIn:carry,
       allowance,
@@ -1011,7 +1121,7 @@ function weeklyLockedAllocation(date){
       closed:w.e<new Date()
     });
 
-    // Unused allowance carries only after a week closes.
+    // Unused allowance carries only after an included week closes.
     if(w.e<new Date())carry=carryOut;
     else carry=0;
   });
@@ -1022,6 +1132,8 @@ function weeklyLockedAllocation(date){
     baseRemaining:Number(snapshot.allocationTotal)||0,
     allocationTotal:Number(snapshot.allocationTotal)||0,
     baseShare:Number(snapshot.baseShare)||0,
+    includedWeekCount:Number(snapshot.includedWeekCount)||Math.max(1,weeks.length-excludedSet.size),
+    excludedWeekIndexes:[...excludedSet].sort((a,b)=>a-b),
     baselineIncome:Number(snapshot.baselineIncome)||0,
     baselineActualExpenses:Number(snapshot.baselineActualExpenses)||0,
     trackedExpenseTotal,
@@ -1038,14 +1150,31 @@ function renderWeeklyAllocation(){
   if(!card||!summary||!weeksEl)return;
   if(period!=='week'){card.classList.remove('show');return}
   card.classList.add('show');
+
   const anchor=parse($('periodAnchor').value),data=weeklyLockedAllocation(anchor);
   const activeIndex=Math.max(0,data.weeks.findIndex(w=>anchor>=w.s&&anchor<=w.e));
+  const excludedCount=data.excludedWeekIndexes.length;
+
   summary.innerHTML=
     `<div class="allocation-stat"><div class="micro">Actual remaining allocation</div><div class="v" style="color:var(--cyan)">${money(data.allocationTotal)}</div><div class="small" style="margin-top:5px">${money(data.baselineIncome)} income − ${money(data.baselineActualExpenses)} actual expenses</div></div>
-     <div class="allocation-stat"><div class="micro">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div><div class="small" style="margin-top:5px">Actual remaining split across ${data.weeks.length} pay-cycle weeks</div></div>
-     <div class="allocation-stat"><div class="micro">Current week remaining</div><div class="v" style="color:${data.weeks[activeIndex]&&data.weeks[activeIndex].remaining<0?'var(--red)':'var(--blue)'}">${money(data.weeks[activeIndex]?.remaining||0)}</div><div class="small" style="margin-top:5px">New actual spend tracked: ${money(data.trackedExpenseTotal)}</div></div>`;
+     <div class="allocation-stat"><div class="micro">Base weekly allocation</div><div class="v">${money(data.baseShare)}</div><div class="small" style="margin-top:5px">Split across ${data.includedWeekCount} included ${data.includedWeekCount===1?'week':'weeks'}${excludedCount?` // ${excludedCount} excluded`:''}</div></div>
+     <div class="allocation-stat"><div class="micro">Current week remaining</div><div class="v" style="color:${data.weeks[activeIndex]?.excluded?'var(--muted)':(data.weeks[activeIndex]&&data.weeks[activeIndex].remaining<0?'var(--red)':'var(--blue)')}">${data.weeks[activeIndex]?.excluded?'Excluded':money(data.weeks[activeIndex]?.remaining||0)}</div><div class="small" style="margin-top:5px">New actual spend tracked: ${money(data.trackedExpenseTotal)}</div></div>`;
+
   weeksEl.innerHTML=data.weeks.map(w=>{
     const active=w.index===activeIndex;
+
+    if(w.excluded){
+      return `<div class="allocation-week excluded ${active?'active':''}">
+        <div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div>
+        <div class="amt">Excluded</div>
+        <div class="small" style="margin-top:4px">No weekly allocation</div>
+        <div class="spent">Spend tracking excluded</div>
+        <div class="remaining">—</div>
+        <div class="carry">Allocation is redistributed to included weeks</div>
+        <div class="small" style="margin-top:5px">${active?'Current week // excluded':'Excluded from this cycle'}</div>
+      </div>`;
+    }
+
     const status=w.overspent<0?`Overspent ${money(Math.abs(w.overspent))}`:w.carryOut>0?`Carries ${money(w.carryOut)} forward`:'Fully used';
     return `<div class="allocation-week ${active?'active':''} ${w.overspent<0?'over':''}">
       <div class="micro">${w.label} // ${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}–${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}</div>
@@ -1058,6 +1187,7 @@ function renderWeeklyAllocation(){
     </div>`;
   }).join('');
 }
+
 function annualizedMonthTransactions(){
   const anchor=parse($('periodAnchor').value);
   return monthTransactionsForDate(anchor)
@@ -1525,21 +1655,97 @@ document.querySelectorAll('[data-payday-mode]').forEach(btn=>btn.onclick=()=>{
   updatePaydayOptions();
 });
 
-$('resetCurrentAllocation').onclick=()=>{
-  const anchor=parse($('periodAnchor').value);
-  const cycle=payCycleForDate(anchor);
+let recalcAllocationAnchor=null;
+
+function formatWeekRange(w){
+  return `${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} – ${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}`;
+}
+
+function updateRecalcAllocationSummary(){
+  const boxes=[...document.querySelectorAll('#recalcWeekList input[type="checkbox"]')];
+  const excluded=boxes.filter(x=>x.checked);
+  boxes.forEach(box=>box.closest('.recalc-week-option')?.classList.toggle('excluded',box.checked));
+
+  const included=Math.max(0,boxes.length-excluded.length);
+  const balance=Number($('recalcAllocationBalance').dataset.value)||0;
+  const share=included?balance/included:0;
+
+  $('confirmRecalcAllocation').disabled=included===0;
+  $('recalcAllocationStatus').textContent=included===0?'At least one week must remain included.':'';
+  $('recalcAllocationSummary').innerHTML=included
+    ? `<strong>${money(share)}</strong> per included week // ${included} included${excluded.length?` // ${excluded.length} excluded`:''}`
+    : 'No weeks are currently included.';
+}
+
+function openRecalcAllocationModal(){
+  recalcAllocationAnchor=parse($('periodAnchor').value);
+  const cycle=payCycleForDate(recalcAllocationAnchor);
+  const weeks=payCycleWeekBuckets(recalcAllocationAnchor);
+  const key=iso(cycle.start);
+  const currentSnapshot=state.settings?.allocationSnapshots?.[key];
+  const currentExcluded=new Set((currentSnapshot?.excludedWeekIndexes||[]).map(Number));
+  const monthActual=monthlyActualBalanceForDate(recalcAllocationAnchor);
+
   const startLabel=cycle.start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
   const endLabel=cycle.end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-  const message=`Recalculate the current pay cycle (${startLabel} – ${endLabel})?\n\nThis removes the locked weekly allocation snapshot and rebuilds the allocation from the current month's Actual remaining balance (income minus actual expenses). That balance is split across the pay-cycle weeks. Expenses recorded after recalculation are then applied to the week of their transaction date.\n\nYour transactions and budget categories are not deleted. Any previous locked weekly allocation values for this cycle will be replaced.`;
-  if(!confirm(message))return;
 
-  state.settings=state.settings||{};
-  state.settings.allocationSnapshots=state.settings.allocationSnapshots||{};
-  delete state.settings.allocationSnapshots[iso(cycle.start)];
+  $('recalcAllocationCopy').textContent=
+    `Rebuild ${startLabel} – ${endLabel} from the current Actual remaining balance. Select any week you want to exclude before recalculating.`;
+  $('recalcAllocationBalance').textContent=money(monthActual.actualRemaining);
+  $('recalcAllocationBalance').dataset.value=String(monthActual.actualRemaining);
+  $('recalcAllocationEquation').textContent=
+    `${money(monthActual.income)} income − ${money(monthActual.actualExpenses)} actual expenses`;
+
+  $('recalcWeekList').innerHTML=weeks.map((w,i)=>`
+    <label class="recalc-week-option ${currentExcluded.has(i)?'excluded':''}">
+      <input type="checkbox" value="${i}" ${currentExcluded.has(i)?'checked':''}>
+      <span>
+        <strong>${w.label} // ${formatWeekRange(w)}</strong>
+        <small>Exclude this week from the allocation and weekly spend tracking</small>
+      </span>
+    </label>
+  `).join('');
+
+  $('recalcWeekList').querySelectorAll('input[type="checkbox"]').forEach(box=>{
+    box.addEventListener('change',updateRecalcAllocationSummary);
+  });
+
+  $('recalcAllocationStatus').textContent='';
+  updateRecalcAllocationSummary();
+  $('recalcAllocationModal').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeRecalcAllocationModal(){
+  $('recalcAllocationModal').classList.remove('open');
+  document.body.classList.remove('modal-open');
+  recalcAllocationAnchor=null;
+}
+
+$('resetCurrentAllocation').onclick=openRecalcAllocationModal;
+$('closeRecalcAllocationModal').onclick=closeRecalcAllocationModal;
+$('cancelRecalcAllocation').onclick=closeRecalcAllocationModal;
+$('recalcAllocationModal').addEventListener('click',e=>{
+  if(e.target===$('recalcAllocationModal'))closeRecalcAllocationModal();
+});
+
+$('confirmRecalcAllocation').onclick=()=>{
+  if(!recalcAllocationAnchor)return;
+
+  const boxes=[...document.querySelectorAll('#recalcWeekList input[type="checkbox"]')];
+  const excluded=boxes.filter(x=>x.checked).map(x=>Number(x.value));
+  if(excluded.length>=boxes.length){
+    $('recalcAllocationStatus').textContent='At least one week must remain included.';
+    return;
+  }
+
+  createWeeklyAllocationSnapshot(recalcAllocationAnchor,excluded);
   saveState();
   refreshPaydayUi();
+  closeRecalcAllocationModal();
   render();
 };
+
 $('savePaydaySettings').onclick=()=>{
   if(pendingPaydayMode==='last'){
     state.settings={...(state.settings||{}),paydayMode:'last',paydayDay:31};
@@ -1948,15 +2154,15 @@ function buildPdfMakeDefinition(){
 
     content.push(
       {
-        text:`Weekly allocation is based on the month's Actual remaining balance: income minus actual expenses. Existing expenses are already included in that balance; new expenses recorded after the allocation snapshot reduce the week in which they occur. Unused balance carries forward only after a week closes.`,
+        text:`Weekly allocation is based on the month's Actual remaining balance: income minus actual expenses. Excluded weeks receive no allocation or weekly spend tracking; the balance is redistributed across included weeks. Existing expenses are already included in the starting balance, and new expenses reduce their included week.`,
         style:'callout',
         margin:[0,0,0,16]
       },
       pdfCardTable([
         pdfMetricCard('Actual remaining allocation',pdfMoney(data.allocationTotal)),
         pdfMetricCard('Actual expenses at snapshot',pdfMoney(data.baselineActualExpenses)),
-        pdfMetricCard('Base weekly allocation',pdfMoney(data.baseShare)),
-        pdfMetricCard('Current week remaining',pdfMoney(active?.remaining||0))
+        pdfMetricCard('Base weekly allocation',pdfMoney(data.baseShare),`${data.includedWeekCount} included week${data.includedWeekCount===1?'':'s'}`),
+        pdfMetricCard('Current week remaining',active?.excluded?'Excluded':pdfMoney(active?.remaining||0))
       ]),
       {
         stack:[
@@ -1976,12 +2182,12 @@ function buildPdfMakeDefinition(){
               body:[
                 ['Week','Period','Allowance','Spent','Remaining','Carry forward'].map(x=>({text:x,style:'tableHeader'})),
                 ...data.weeks.map(w=>[
-                  {text:w.label,style:'tableText'},
+                  {text:w.excluded?`${w.label} (excluded)`:w.label,style:'tableText'},
                   {text:`${w.s.toLocaleDateString(undefined,{day:'2-digit',month:'short'})} – ${w.e.toLocaleDateString(undefined,{day:'2-digit',month:'short'})}`,style:'tableText'},
-                  {text:pdfMoney(w.allowance),style:'tableText',alignment:'right'},
-                  {text:pdfMoney(w.spent),style:'tableText',alignment:'right'},
-                  {text:pdfMoney(w.remaining),style:'tableText',alignment:'right'},
-                  {text:pdfMoney(w.carryOut),style:'tableText',alignment:'right'}
+                  {text:w.excluded?'—':pdfMoney(w.allowance),style:'tableText',alignment:'right'},
+                  {text:w.excluded?'—':pdfMoney(w.spent),style:'tableText',alignment:'right'},
+                  {text:w.excluded?'—':pdfMoney(w.remaining),style:'tableText',alignment:'right'},
+                  {text:w.excluded?'—':pdfMoney(w.carryOut),style:'tableText',alignment:'right'}
                 ])
               ]
             },
@@ -2677,6 +2883,12 @@ document.querySelectorAll('.card,.metric').forEach(c=>{
     c.classList.add('tilt-active');
   });
   c.addEventListener('pointerleave',()=>{c.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg)';c.classList.remove('tilt-active')});
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('recalcAllocationModal')?.classList.contains('open')){
+    closeRecalcAllocationModal();
+  }
 });
 </script>
 </body></html>
