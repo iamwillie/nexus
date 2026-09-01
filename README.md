@@ -1,38 +1,39 @@
 # Nexus Budget
 
-**Nexus Budget** is a local-first personal budgeting dashboard built with HTML, CSS, and vanilla JavaScript. Everything runs from a single HTML file, with financial data stored entirely in your browser.
+Nexus Budget is a lightweight, mobile-first personal budgeting app built as a single-page HTML application.
 
 ## Features
 
-* Track income and expenses
-* Weekly, monthly, and yearly views
-* Monthly category budgets
-* Remaining balance and weekly allocation
-* Budget vs actual tracking
-* Expense and cashflow visualizations
-* High-level annual financial projections
-* Downloadable reports
-* JSON backup/import for device transfer
-* CSV transaction export
-* Dark and light themes
-* Responsive futuristic Nexus interface
+- Week, Month, and Year views
+- Salary-month cycles based on payday
+  - 25th
+  - Month end
+  - Custom payday
+- Monthly budgets vs actual spending
+- Weekly allocations based on **Actual Remaining**
+- Optional exclusion of weeks from an allocation cycle
+- Transaction tracking with paid/unpaid status
+- Local browser storage with optional Supabase cloud sync
+- JSON import/export and CSV transaction export
+- HTML and PDF financial reports
+- Dark and light themes
+- Responsive mobile-first interface
 
-## Privacy
+## Salary Months
 
-There is no backend, database, account, or cloud storage. Your financial data is stored using browser `localStorage`.
+Months follow your configured salary cycle rather than calendar dates.
 
-Export a JSON backup regularly, as clearing browser storage will remove locally stored data.
+For example, with a payday on the **25th**:
 
-## Usage
+**September → 25 August to 25 September**
 
-No installation or build process is required.
+The same logic applies to month-end and custom payday settings.
 
-Open `nexus_budget_2060.html` in a modern browser, or host it using a static service such as GitHub Pages.
+## Data
 
-## Tech
+Nexus Budget stores data locally in your browser by default. Supabase authentication and cloud synchronization can optionally be enabled for cross-device access.
 
-HTML5 · CSS3 · Vanilla JavaScript · LocalStorage · Canvas API
+## Current Release
 
----
-
-**Nexus Budget** — *Local-first personal finance console.*
+**Version:** 1.3.4  
+**Build:** 2026.09.01.1
