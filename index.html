@@ -381,10 +381,57 @@ body.light .report-preview-toolbar{background:rgba(220,229,235,.94)}
   .report-preview-actions .btn{width:100%}
   .report-preview-actions .icon-btn{width:42px}
 }
+
+/* ================================================================
+   Minimal performance theme
+   Static surfaces only: no animation, blur, glow, gradients or tilt.
+   ================================================================ */
+html{scroll-behavior:auto!important}
+*,*::before,*::after{animation:none!important;transition:none!important}
+body{background:var(--bg)!important}
+body::after,#particles,.orb{display:none!important}
+:root{--surface:#0d1219;--surface2:#131a23;--border:#27313d;--radius:14px;--shadow:none}
+body.light{--bg:#e9edf1;--surface:#ffffff;--surface2:#f4f6f8;--border:#ccd4dc;--shadow:none;background:var(--bg)!important}
+body.light::after{display:none!important}
+.topbar,body.light .topbar{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.logo{background:var(--surface);box-shadow:none}.logo::after{display:none}.logo svg{filter:none}
+.dot,.cloud-status-dot,.cloud-status-dot.ready,.cloud-status-dot.syncing,.cloud-status-dot.synced,.cloud-status-dot.error{box-shadow:none}
+.btn,body.light .btn,.mobile-menu-toggle,.theme-switch{box-shadow:none;background:var(--surface)}
+.btn:hover,body.light .btn:hover{background:var(--surface2);border-color:var(--border);color:var(--text)}
+.btn.primary,.btn.primary:hover{background:var(--surface2);border-color:var(--cyan);color:var(--cyan)}
+.btn.danger,.btn.danger:hover{background:var(--surface);border-color:var(--red);color:var(--red)}
+.theme-switch-thumb,body.light .theme-switch-thumb{box-shadow:none}
+.period-nav,body.light .period-nav{background:var(--surface)}.period-btn.active{box-shadow:none}
+.card,.metric,body.light .card,body.light .metric{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;transform:none!important;transform-style:flat;will-change:auto}
+.card.tilt-active,.metric.tilt-active{border-color:var(--border);box-shadow:none}.card::before,.metric::before{display:none!important}
+.icon{background:var(--surface2);box-shadow:none}
+.field input,.field select,.field textarea,body.light .field input,body.light .field select,body.light .field textarea,.edit-allocation-row input,.allocation-transfer select,.allocation-transfer input{background:var(--surface2);box-shadow:none}
+.field input:focus,.field select:focus,.field textarea:focus{box-shadow:none}
+.table-wrap,body.light .table-wrap{background:var(--surface)}th,body.light th{background:var(--surface2)}tbody tr:hover td{background:var(--surface2)}
+.donut{box-shadow:none}.donut::after,body.light .donut::after{background:var(--surface)}
+.allocation-stat,.allocation-week,.copy-cycle-card,.recalc-balance,.recalc-week-option,.edit-allocation-total,.edit-allocation-row,.allocation-transfer,.auth-account,.conflict-panel,.payday-option,.theme-control{background:var(--surface2);box-shadow:none}
+.copy-cycle-card{border-color:var(--border)}.allocation-week.active{background:var(--surface2);box-shadow:none;border-color:var(--cyan)}.allocation-week.excluded{background:var(--surface2);box-shadow:none}
+.track{background:var(--surface2)}.bar{background:var(--cyan);box-shadow:none}.bar.over{background:var(--red)}
+.trend-bar.income{background:var(--green)}.trend-bar.expense{background:var(--red)}.trend-bar.allocation{background:var(--cyan);box-shadow:none}.trend-col.active .trend-bar.allocation{background:var(--blue);box-shadow:none}
+.modal{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(0,0,0,.72)}
+.report-preview-toolbar,body.light .report-preview-toolbar{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.actions,.mobile-menu-toggle span{transition:none!important}
+body.light .allocation-stat,body.light .allocation-week,body.light .copy-cycle-card,body.light .recalc-balance,body.light .recalc-week-option,body.light .edit-allocation-total,body.light .edit-allocation-row,body.light .allocation-transfer,body.light .auth-account,body.light .conflict-panel,body.light .payday-option,body.light .theme-control{background:var(--surface2)}
+
+
+/* Theme toggle cleanup: remove the outer container box. */
+.theme-control,
+body.light .theme-control{
+  border:0!important;
+  background:transparent!important;
+  border-radius:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+}
+
 </style>
 </head>
 <body>
-<canvas id="particles"></canvas><div class="orb one"></div><div class="orb two"></div>
 <div class="shell">
 <header class="topbar">
   <div class="brand"><div class="logo" aria-label="Nexus Budget logo">
@@ -529,13 +576,13 @@ body.light .report-preview-toolbar{background:rgba(220,229,235,.94)}
     </div>
     <div class="payday-options">
       <button class="payday-option" id="payday25Option" type="button" data-payday-mode="day" data-payday-day="25">
-        <strong>25th of the month</strong><small>September salary month: 25 Aug → 25 Sep</small>
+        <strong>25th of the month</strong><small>September salary month: 25 Aug → 24 Sep</small>
       </button>
       <button class="payday-option" id="paydayLastOption" type="button" data-payday-mode="last">
-        <strong>Last day of month</strong><small>September salary month: 31 Aug → 30 Sep</small>
+        <strong>Last day of month</strong><small>September salary month: 31 Aug → 29 Sep</small>
       </button>
       <button class="payday-option" id="paydayCustomOption" type="button" data-payday-mode="custom">
-        <strong>Custom day</strong><small>Uses the same rule: prior month's custom day → selected month's custom day</small>
+        <strong>Custom day</strong><small>Prior month's custom day → day before this month's custom payday</small>
       </button>
     </div>
     <div id="customPaydayWrap" class="field">
@@ -910,8 +957,8 @@ async function signUp(){
 }
 async function signOut(){try{await supabaseClient.auth.signOut()}catch(error){console.error(error)}stopCloudRefresh();currentUser=null;const m=syncMeta();delete m.lastSyncedAt;delete m.userId;saveSyncMeta(m);setCloudStatus('ready','CLOUD READY');refreshCloudUi();setAuthStatus('Signed out.')}
 
-const APP_VERSION='1.3.4';
-const BUILD_NUMBER='2026.09.01.1';
+const APP_VERSION='1.3.5';
+const BUILD_NUMBER='2026.09.23.1';
 const STORAGE_KEY='nexus-budget-2060-v1';
 const THEME_KEY='nexus-budget-2060-theme-v1';
 const DEFAULT={version:3,appVersion:'1.0.0',buildNumber:'2026.08.25.1',transactions:[],budgets:{},settings:{paydayMode:'day',paydayDay:25,allocationSnapshots:{}}};
@@ -1038,15 +1085,19 @@ function salaryMonthBounds(date){
   d.setHours(0,0,0,0);
 
   // The selected month is the month the salary is FOR.
-  // September therefore starts on the configured payday in August and runs
-  // through the configured payday in September.
+  // Paydays are exclusive cycle boundaries: a transaction on payday belongs
+  // to the NEW cycle only, so adjacent salary months never overlap.
   const targetYear=d.getFullYear();
   const targetMonth=d.getMonth();
   const s=paydayDateForMonth(targetYear,targetMonth-1);
-  const e=paydayDateForMonth(targetYear,targetMonth);
+  const nextPayday=paydayDateForMonth(targetYear,targetMonth);
+  const e=new Date(nextPayday);
+  e.setDate(e.getDate()-1);
+
   return{
     s,
     e,
+    nextPayday,
     salaryMonth:new Date(targetYear,targetMonth,1)
   };
 }
@@ -1854,7 +1905,7 @@ $('saveAndAddTxn').onclick=()=>{
 };
 
 $('txnBody').addEventListener('click',e=>{const paid=e.target.closest('[data-paid]'),edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]');if(paid){const t=state.transactions.find(x=>x.id===paid.dataset.paid);if(t&&t.type==='expense'){t.paid=!t.paid;saveState();render()}return}if(edit){const t=state.transactions.find(x=>x.id===edit.dataset.edit);if(!t)return;editingId=t.id;$('txnDate').value=t.date;$('txnType').value=t.type;$('txnCategory').value=t.category;$('txnAmount').value=t.amount;$('txnNote').value=t.note||'';$('saveTxn').textContent='Save changes';$('saveAndAddTxn').style.display='none';$('cancelEdit').style.display='block';$('txnModalTitle').textContent='Edit transaction';$('txnModalSubtitle').textContent='UPDATE TRANSACTION';openTxnModal('transaction');return}if(del){const t=state.transactions.find(x=>x.id===del.dataset.del);if(t&&confirm(`Delete ${t.category} ${money(t.amount)}?`)){state.transactions=state.transactions.filter(x=>x.id!==t.id);saveState();render()}}})
-$('cancelEdit').onclick=()=>{editingId=null;$('txnForm').reset();$('txnDate').value=$('periodAnchor').value||iso(new Date());$('saveTxn').textContent='Add transaction';$('saveAndAddTxn').style.display='';$('cancelEdit').style.display='none';$('txnModalTitle').textContent='Add transaction';closeTxnModal()}
+$('cancelEdit').onclick=()=>{editingId=null;$('txnForm').reset();$('txnDate').value=iso(new Date());$('saveTxn').textContent='Add transaction';$('saveAndAddTxn').style.display='';$('cancelEdit').style.display='none';$('txnModalTitle').textContent='Add transaction';closeTxnModal()}
 
 $('copyPreviousCycle').onclick=()=>{
   if(period!=='month')return;
@@ -2293,7 +2344,7 @@ $('addBudgetBtn').onclick=e=>{
 $('addTransactionBtn').onclick=()=>{
   editingId=null;
   $('txnForm').reset();
-  $('txnDate').value=$('periodAnchor').value||iso(new Date());
+  $('txnDate').value=iso(new Date());
   $('saveTxn').textContent='Add transaction';
   $('saveAndAddTxn').style.display='';
   $('cancelEdit').style.display='none';
@@ -3341,8 +3392,7 @@ if(SUPABASE_CONFIGURED){
   });
 }
 
-// ambient particles
-const canvas=$('particles'),ctx=canvas.getContext('2d');let ps=[];function resize(){const r=devicePixelRatio||1;canvas.width=innerWidth*r;canvas.height=innerHeight*r;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(r,0,0,r,0,0);ps=Array.from({length:Math.min(100,Math.floor(innerWidth/15))},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:Math.random()*1.2+.2,v:Math.random()*.09+.02,o:Math.random()*.2+.04}))}function anim(){ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of ps){p.y-=p.v;if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth}ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fillStyle=`rgba(130,210,255,${p.o})`;ctx.fill()}requestAnimationFrame(anim)}addEventListener('resize',resize);resize();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)anim();
+// Ambient animation removed for performance.
 
 const mobileMenuToggle=$('mobileMenuToggle'),headerActions=$('headerActions');
 mobileMenuToggle.addEventListener('click',()=>{
@@ -3362,20 +3412,7 @@ addEventListener('resize',()=>{
   }
 });
 
-document.querySelectorAll('.card,.metric').forEach(c=>{
-  const noTilt=()=>matchMedia('(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce)').matches;
-  const interactive=t=>Boolean(t.closest('button,input,select,textarea,a,label,.table-wrap'));
-  c.addEventListener('pointermove',e=>{
-    const r=c.getBoundingClientRect();
-    c.style.setProperty('--gx',(e.clientX-r.left)+'px');
-    c.style.setProperty('--gy',(e.clientY-r.top)+'px');
-    if(noTilt()||interactive(e.target)){c.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg)';c.classList.remove('tilt-active');return}
-    const nx=(e.clientX-r.left)/r.width-.5,ny=(e.clientY-r.top)/r.height-.5;
-    c.style.transform=`perspective(1000px) rotateX(${(-ny*1.5).toFixed(2)}deg) rotateY(${(nx*1.5).toFixed(2)}deg) translateY(-1px)`;
-    c.classList.add('tilt-active');
-  });
-  c.addEventListener('pointerleave',()=>{c.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg)';c.classList.remove('tilt-active')});
-});
+// Card tilt and pointer-follow effects removed for performance.
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&$('recalcAllocationModal')?.classList.contains('open')){
