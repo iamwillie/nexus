@@ -542,6 +542,172 @@ body.light .hero-add-transaction:hover{
   color:#ffffff!important;
 }
 
+
+
+/* Mobile responsiveness fixes */
+@media(max-width:760px){
+  .shell{width:100%;max-width:100%;padding-left:14px;padding-right:14px}
+
+  .hero{
+    grid-template-columns:1fr!important;
+    gap:16px;
+    align-items:start;
+  }
+  .hero>div:first-child{min-width:0;width:100%}
+  .hero h2{
+    width:100%;
+    max-width:none;
+    font-size:clamp(2rem,11vw,3rem);
+    line-height:1.02;
+    overflow-wrap:normal;
+    word-break:normal;
+  }
+  .hero p{
+    width:100%;
+    max-width:none;
+    font-size:.9rem;
+    line-height:1.55;
+    overflow-wrap:normal;
+    word-break:normal;
+  }
+
+  .hero-period-actions{
+    justify-self:stretch;
+    width:100%;
+    min-width:0;
+    display:flex;
+    align-items:stretch;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .hero-add-transaction{flex:1 1 150px;min-width:0}
+  .hero-period-actions .period-nav{
+    flex:1 1 220px;
+    min-width:0;
+    width:auto;
+    max-width:100%;
+    overflow:visible;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .hero-period-actions .period-btn{
+    min-width:0;
+    text-align:center;
+    padding-left:8px;
+    padding-right:8px;
+  }
+
+  .control-strip{
+    display:grid!important;
+    grid-template-columns:42px minmax(88px,auto) 42px minmax(0,1fr)!important;
+    gap:8px;
+    align-items:end;
+  }
+  .control-strip>.field{grid-column:1/-1;width:100%;min-width:0}
+  .control-strip>.field #periodPicker{width:100%;min-width:0}
+  .control-strip #prevPeriod{grid-column:1}
+  .control-strip #todayPeriod{grid-column:2;width:100%;min-width:0}
+  .control-strip #nextPeriod{grid-column:3}
+  .control-strip>div[style*="margin-left:auto"]{
+    grid-column:4;
+    margin-left:0!important;
+    min-width:0;
+    justify-self:end;
+    text-align:right;
+  }
+
+  .metrics{grid-template-columns:1fr 1fr}
+  .finance-pair-grid{grid-template-columns:1fr!important}
+  .allocation-summary{grid-template-columns:1fr}
+
+  .txn-toolbar{grid-template-columns:1fr 1fr!important}
+  .txn-toolbar .search-field{grid-column:1/-1}
+  .txn-list-actions{flex-wrap:wrap}
+
+  .table-wrap{
+    max-width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  #tableSection>summary{
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    gap:8px;
+  }
+  .txn-summary-total{max-width:42vw}
+}
+
+@media(max-width:520px){
+  .shell{padding-left:12px;padding-right:12px}
+  .hero{padding-top:18px}
+  .hero h2{font-size:clamp(2rem,12vw,2.65rem)}
+
+  .hero-period-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .hero-add-transaction{width:100%}
+  .hero-period-actions .period-nav{
+    width:100%;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .control-strip{
+    grid-template-columns:42px minmax(82px,1fr) 42px!important;
+  }
+  .control-strip>div[style*="margin-left:auto"]{
+    grid-column:1/-1;
+    justify-self:start;
+    text-align:left;
+    margin-top:4px;
+  }
+
+  .metrics{grid-template-columns:1fr}
+
+  .txn-toolbar{grid-template-columns:1fr!important}
+  .txn-toolbar .search-field{grid-column:1}
+
+  .txn-list-actions{align-items:stretch!important}
+  .txn-list-actions>div:last-child{
+    width:100%;
+    display:grid!important;
+    grid-template-columns:1fr 1fr;
+  }
+  .txn-list-actions .btn{width:100%;min-width:0}
+
+  #tableSection>summary{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "main toggle"
+      "total total";
+    align-items:center;
+  }
+  #tableSection>summary .summary-main{grid-area:main}
+  #tableSection>summary:after{grid-area:toggle}
+  .txn-summary-total{
+    grid-area:total;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    padding:10px 0 0;
+    margin:8px 0 0;
+    border-right:0;
+    border-top:1px solid var(--border);
+    align-items:flex-start;
+  }
+  .txn-summary-total strong{font-size:1rem}
+
+  .allocation-heading-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .allocation-heading-actions .btn{width:100%}
+
+  .footer{gap:8px}
+}
+
 </style>
 </head>
 <body>
